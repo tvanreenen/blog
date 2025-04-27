@@ -1,0 +1,337 @@
+/* 1. Imports & Variables */
+:root {
+  /* Spacing Scale */
+  --space-2xs: 0.25em;
+  --space-xs: 0.5em;
+  --space-sm: 1em;
+  --space-md: 1.5em;
+  --space-lg: 2em;
+
+  /* Border Properties */
+  --radius-base: 3px;
+  --border-base: 1px;
+
+  /* Color Palette - Light mode (default) */
+  --color-text-primary: #333;
+  --color-background: #fff;
+  --color-code-background: #f6f8fa;
+  --color-code-inline: rgba(27, 31, 35, 0.05);
+  --color-border-base: #eaecef;
+  --color-border-quote: #dfe2e5;
+  --color-text-quote: #6a737d;
+  --color-border-table: #dfe2e5;
+  --color-border-table-row: #c6cbd1;
+  --color-background-table-alt: #f6f8fa;
+  --color-border-hr: #e1e4e8;
+  --color-link: #0366d6;
+  --color-focus-ring: #0366d6;
+  --color-hover-background: rgba(27, 31, 35, 0.05);
+}
+
+/* Dark mode color palette */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-text-primary: #e1e4e8;
+    --color-background: #0d1117;
+    --color-code-background: #161b22;
+    --color-code-inline: rgba(110, 118, 129, 0.4);
+    --color-border-base: #30363d;
+    --color-border-quote: #30363d;
+    --color-text-quote: #8b949e;
+    --color-border-table: #30363d;
+    --color-border-table-row: #21262d;
+    --color-background-table-alt: #161b22;
+    --color-border-hr: #21262d;
+    --color-link: #58a6ff;
+    --color-focus-ring: #58a6ff;
+    --color-hover-background: rgba(110, 118, 129, 0.1);
+  }
+}
+
+/* 2. Base Styles */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+html {
+  font-size: 16px;
+  scroll-behavior: smooth;
+  margin: 0;
+  -webkit-font-smoothing: antialiased;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+}
+
+body {
+  font-family: 'Open Sans', Helvetica, sans-serif;
+  line-height: 1.6;
+  color: var(--color-text-primary);
+  background-color: var(--color-background);
+  max-width: 800px;
+  margin: 0 auto;
+  padding: var(--space-lg);
+  overflow-wrap: break-word;
+  height: 100vh; /* ensures it covers full screen */
+}
+
+@media (prefers-color-scheme: dark) {
+  body {
+    background: 
+      radial-gradient(
+        ellipse at top center,
+        #002850 0%, 
+        #000000 60%
+      ) no-repeat,
+      #000000;
+    background-size: 100% 100%;
+    background-attachment: fixed;
+  }
+}
+
+/* 3. Typography */
+/* Headings */
+h1, h2, h3, h4, h5, h6 {
+  line-height: 1.25;
+  font-weight: 300;
+}
+
+h1:first-of-type {
+  margin-top: var(--space-xs);
+}
+
+h1 { font-size: 3.998rem; }
+h2 { font-size: 2.827rem; }
+h3 { font-size: 1.999rem; }
+h4 { font-size: 1.414rem; }
+h5 { font-size: 1.121rem; }
+h6 { font-size: .88rem; }
+
+/* Text Elements */
+p, blockquote {
+  margin-top: 0;
+  margin-bottom: var(--space-md);
+}
+
+strong {
+  font-weight: 700;
+}
+
+em {
+  font-style: italic;
+}
+
+sup, sub {
+  vertical-align: baseline;
+  position: relative;
+  font-size: 0.75em;
+  line-height: 0;
+}
+
+sup { top: -0.4em; }
+sub { top: 0.3em; }
+
+mark {
+  border-radius: var(--radius-base);
+  padding: var(--space-2xs) var(--space-xs);
+}
+
+/* 4. Links */
+a {
+  color: var(--color-link);
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+a:focus {
+  outline: none;
+}
+
+/* 5. Code & Preformatted Text */
+
+pre {
+  background-color: var(--color-code-background);
+  padding: var(--space-md);
+  overflow: auto;
+  margin-top: 0;
+  margin-bottom: var(--space-md);
+  border-radius: var(--radius-base);
+}
+
+code {
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+  font-size: 0.9em;
+  background-color: var(--color-code-inline);
+  border-radius: var(--radius-base);
+  padding: var(--space-2xs) var(--space-xs);
+}
+
+pre code {
+  background-color: transparent;
+  padding: 0;
+  border-radius: 0;
+}
+
+/* 6. Block Elements */
+blockquote {
+  padding: 0 var(--space-sm);
+  color: var(--color-text-quote);
+  border-left: 0.25em solid var(--color-border-quote);
+}
+
+blockquote > :first-child { margin-top: 0; }
+blockquote > :last-child { margin-bottom: 0; }
+
+hr {
+  height: 2px;
+  padding: 0;
+  margin: var(--space-lg) 0;
+  background-color: var(--color-border-hr);
+  border: 0;
+}
+
+/* 7. Tables */
+table {
+  display: block;
+  width: 100%;
+  overflow: auto;
+  margin-top: 0;
+  margin-bottom: var(--space-md);
+  border-spacing: 0;
+  border-collapse: collapse;
+}
+
+table th {
+  font-weight: 600;
+  padding: var(--space-xs) var(--space-md);
+  border: var(--border-base) solid var(--color-border-table);
+}
+
+table td {
+  padding: var(--space-xs) var(--space-md);
+  border: var(--border-base) solid var(--color-border-table);
+}
+
+table tr {
+  border-top: var(--border-base) solid var(--color-border-table-row);
+}
+
+table tr:nth-child(2n) {
+  background-color: var(--color-background-table-alt);
+}
+
+/* 8. Media */
+img {
+  max-width: 100%;
+  background-color: var(--color-background);
+}
+
+/* 9. Custom Styles */
+header {
+  margin-bottom: var(--space-lg);
+}
+footer {
+  margin-top: var(--space-lg);
+  font-size: 0.8rem;
+}
+
+.back-link {
+  margin-bottom: var(--space-sm);
+}
+
+.back-link a {
+  color: var(--color-text-primary);
+  opacity: 0.8;
+  transition: opacity 0.2s ease;
+}
+
+.back-link a:hover {
+  opacity: 1;
+  text-decoration: none;
+}
+
+header .avatar {
+  width: 100px;
+  height: 100px;
+  object-fit: cover;
+  border-radius: 50%;
+  margin-right: 0.5rem; 
+  vertical-align: middle;
+}
+
+header h1 {
+  margin: 0;
+}
+
+.header-name {
+  display: inline-block;
+  vertical-align: middle;
+}
+
+.header-links {
+  font-size: 1rem;
+  font-weight: normal;
+}
+
+.header-links a {
+  color: var(--color-accent);
+  opacity: 0.8;
+  transition: opacity 0.2s ease;
+}
+
+.header-links a:hover {
+  opacity: 1;
+}
+
+/* Post List */
+.post-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.post-item {
+  padding: var(--space-md) var(--space-md);
+  /*border-bottom: var(--border-base) solid var(--color-border-base);*/
+  border-left: 4px solid var(--color-border-base);
+  transition: all 0.2s ease;
+  margin-left: var(--space-xs);
+  margin-bottom: var(--space-sm);
+  background-color: var(--color-hover-background);
+}
+
+.post-link {
+  display: block;
+  color: var(--color-text-primary);
+  text-decoration: none;
+}
+
+.post-link:hover {
+  text-decoration: none;
+}
+
+.post-item:hover {
+  border-left-color: var(--color-link);
+}
+
+@media (prefers-color-scheme: dark) {
+  .post-item:hover {
+    background-color: rgba(110, 118, 129, 0.1);
+  }
+}
+
+.post-link h5 {
+  margin-top: 0;
+  margin-bottom: var(--space-sm);
+}
+
+.post-link p {
+  margin-bottom: 0;
+}

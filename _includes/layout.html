@@ -4,19 +4,29 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="color-scheme" content="light dark">
-    <title>{{ title | default: "My Blog" }}</title>
-    <link rel="stylesheet" href="https://cdn.simplecss.org/simple.min.css">
-    <link rel="stylesheet" href="/css/custom.css">
+    <title>{{ title | default: "Tim VanReenen" }}</title>
+    <link rel="stylesheet" href="/css/styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;300i;700&display=swap" rel="stylesheet">
 </head>
 <body>
     <header>
-        <h1>{{ title | default: "My Blog" }}</h1>
+        <h1>
+            <img src="https://gravatar.com/avatar/33b54f9783a0cd9f114fe2e339a1277f?size=256" class="avatar">
+            <div class="header-name">
+                <div>Tim VanReenen</div>
+                <div class="header-links">
+                    <a href="https://linkedin.com/in/tvanreenen">linkedin.com/in/tvanreenen</a>
+                    | 
+                    <a href="https://github.com/tvanreenen">github.com/tvanreenen</a>
+                </div>
+            </div>
+        </h1>
     </header>
     <main>
         {{ content }}
     </main>
     <footer>
-        <p>&copy; 2025 My Blog. All rights reserved.</p>
+        <p>&copy; {{ 'now' | date: "%Y" }} Tim VanReenen. All rights reserved.</p>
     </footer>
 </body>
 </html>
