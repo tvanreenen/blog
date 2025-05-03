@@ -1,7 +1,7 @@
 ---
 title: Blog Charter
 date: git Created
-summary: An opening writeup on the purpose and intent of this blog and what I hope to share over time.
+description: An opening writeup on the purpose and intent of this blog and what I hope to share over time.
 ---
 
 ![Digitial Workbench](hero.png)

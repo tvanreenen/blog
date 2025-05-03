@@ -1,7 +1,7 @@
 ---
 title: Embeddings — A Mathematical Rosetta Stone for Generative AI
 date: git Created
-summary: An introduction to how large language models represent meaning using high-dimensional vector space — showing how machines interpret, connect, and generate human-like language in context.
+description: An introduction to how large language models represent meaning using high-dimensional vector space — showing how machines interpret, connect, and generate human-like language in context.
 ---
 
 This is one of those posts that I put together for my own edification in my personal [Obsidian](https://obsidian.md/) vault. But it ulimately derived from a [Jupyter](https://jupyter.org/) notebook that I put together when I was first trying to understand some of the foundational concepts behind generative AI.

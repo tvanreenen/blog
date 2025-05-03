@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="description" content="{{ description | default: "My personal blog where I share lessons, experiments, and ideas from my work in product, design, and software engineering." }}">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="color-scheme" content="light dark">
     <title>{{ title | default: "Tim VanReenen" }}</title>
@@ -12,7 +13,7 @@
 <body>
     <header>
         <h1>
-            <img src="https://gravatar.com/avatar/33b54f9783a0cd9f114fe2e339a1277f?size=256" class="avatar">
+            <img src="https://gravatar.com/avatar/33b54f9783a0cd9f114fe2e339a1277f?size=256" class="avatar" alt="Avatar of Tim VanReenen">
             <div class="header-name">
                 <div>Tim VanReenen</div>
                 <div class="header-links">

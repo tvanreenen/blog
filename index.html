@@ -1,5 +1,6 @@
 ---
 layout: "layout.html"
+changes: monthly
 ---
 <h4><em>Welcome to my corner of the internet — where I share lessons, experiments, and ideas from my work in product, design, and software engineering.</em></h4>
 <div class="post-list" role="list">
@@ -7,7 +8,7 @@ layout: "layout.html"
   <div class="post-item" role="listitem">
     <a href="{{ post.url }}" class="post-link">
       <h5>{{ post.data.title }}</h5>
-      <p>{{ post.data.summary }}</p>
+      <p>{{ post.data.description }}</p>
     </a>
   </div>
 {% endfor %}
