@@ -34,6 +34,7 @@
     --color-text-primary: #e1e4e8;
     --color-background: #0d1117;
     --color-code-background: #161b22;
+    --color-code-background-rgb: 22, 27, 34;
     --color-code-inline: rgba(110, 118, 129, 0.4);
     --color-border-base: #30363d;
     --color-border-quote: #30363d;
@@ -156,23 +157,26 @@ a:focus {
 
 /* 5. Code & Preformatted Text */
 
-pre {
-  background-color: var(--color-code-background);
-  padding: var(--space-md);
-  overflow: auto;
-  margin-top: 0;
-  margin-bottom: var(--space-md);
-  border-radius: var(--radius-base);
+/* Prism (code blocks) */
+pre, pre[class*="language-"] {
+  background-color: rgba(var(--color-code-background-rgb), 0.5) !important;
+  padding: var(--space-md) !important;
+  margin: var(--space-sm) 0 !important;
+  border-radius: var(--radius-base) !important;
+  overflow: auto !important;
 }
 
+/* Inline code */
 code {
   font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
   font-size: 0.9em;
-  background-color: var(--color-code-inline);
+  /*background-color: var(--color-code-inline);*/
+  background-color: rgba(var(--color-code-background-rgb), 0.5) !important;
   border-radius: var(--radius-base);
   padding: var(--space-2xs) var(--space-xs);
 }
 
+/* Reset inline code styles inside pre blocks */
 pre code {
   background-color: transparent;
   padding: 0;
