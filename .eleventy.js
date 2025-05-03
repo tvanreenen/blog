@@ -6,6 +6,8 @@ module.exports = function(eleventyConfig) {
     // allows the post to be organized by folder
     eleventyConfig.addWatchTarget("posts");
     eleventyConfig.addCollection("posts", function(collection) {
-        return collection.getFilteredByGlob("posts/**/index.md");
+        return collection.getFilteredByGlob("posts/**/index.md").sort(function (a, b) {
+            return b.date - a.date; // sort by date - descending
+        });
     });
 }; 
