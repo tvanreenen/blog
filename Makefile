@@ -8,13 +8,13 @@ help:
 	@echo "  build   - Build the site without serving"
 	@echo "  clean   - Remove the _site directory"
 
-serve:
+serve: clean
 	npx @11ty/eleventy --serve
 
-watch:
+watch: clean
 	npx @11ty/eleventy --watch
 
-build:
+build: clean
 	npx @11ty/eleventy
 
 clean:
