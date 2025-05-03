@@ -1,4 +1,10 @@
 {
     "url": "https://tim.vanreenen.me",
+    "name": "Tim VanReenen",
+    "description": "My corner of the internet where I share lessons, experiments, and ideas from my work in product, design, and software engineering.",
+    "gravatar": "https://gravatar.com/avatar/33b54f9783a0cd9f114fe2e339a1277f?size=256",
+    "linkedin": "https://linkedin.com/in/tvanreenen",
+    "github": "https://github.com/tvanreenen",
+    "ogImage": "https://tim.vanreenen.me/vanreenen-og.png",
     "googleSiteVerification": "8y6qCc2X9-UKRXVXlc25QLOssy2OQbv9gltgz33qQso"
 }
