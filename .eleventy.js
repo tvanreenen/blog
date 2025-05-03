@@ -4,6 +4,7 @@ module.exports = function(eleventyConfig) {
     // Copy CSS files
     eleventyConfig.addPassthroughCopy("css");
     // allows the post to be organized by folder
+    eleventyConfig.addWatchTarget("posts");
     eleventyConfig.addCollection("posts", function(collection) {
         return collection.getFilteredByGlob("posts/**/index.md");
     });
