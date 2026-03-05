@@ -339,3 +339,95 @@ header h1 {
 .post-link p {
   margin-bottom: 0;
 }
+
+/* 10. Work Page */
+.work-hero {
+  margin-bottom: var(--space-lg);
+  padding-bottom: 0;
+}
+
+.work-hero h2 {
+  margin-bottom: var(--space-xs);
+}
+
+.work-services {
+  margin-bottom: var(--space-lg);
+}
+
+.service-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-md);
+}
+
+@media (max-width: 600px) {
+  .service-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.service-card {
+  padding: var(--space-md);
+  border-left: 3px solid var(--color-border-base);
+  background-color: var(--color-hover-background);
+  border-radius: 0 var(--radius-base) var(--radius-base) 0;
+  transition: border-color 0.2s ease;
+}
+
+.service-card:hover {
+  border-left-color: var(--color-link);
+}
+
+.service-card h4 {
+  margin-top: 0;
+  margin-bottom: var(--space-xs);
+  font-weight: 700;
+  font-size: 1rem;
+  letter-spacing: 0.01em;
+}
+
+.service-card p {
+  margin-bottom: 0;
+  font-size: 0.925rem;
+  opacity: 0.9;
+  line-height: 1.55;
+}
+
+.work-cta {
+  padding-top: 0;
+  margin-bottom: var(--space-lg);
+}
+
+.cta-links {
+  display: flex;
+  gap: var(--space-sm);
+  flex-wrap: wrap;
+}
+
+.cta-button {
+  display: inline-block;
+  padding: 0.65em 1.5em;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--color-background);
+  background-color: var(--color-link);
+  border-radius: var(--radius-base);
+  text-decoration: none;
+  transition: opacity 0.2s ease;
+}
+
+.cta-button:hover {
+  opacity: 0.85;
+  text-decoration: none;
+}
+
+.cta-button-secondary {
+  color: var(--color-link);
+  background-color: transparent;
+  border: 1px solid var(--color-link);
+}
+
+.cta-button-secondary:hover {
+  background-color: var(--color-hover-background);
+  opacity: 1;
+}
