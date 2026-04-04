@@ -12,13 +12,11 @@ One of the first big questions I had was:
 
 The answer begins with [embeddings](https://en.wikipedia.org/wiki/Word_embedding).
 
-
 ### Embedding Concepts in Space
 
 In mathematical terms, embeddings are represented as [vectors](https://en.wikipedia.org/wiki/Vector_(mathematics_and_physics)) — long lists of numbers where each value reflects how much a concept aligns with a particular, learned dimension of meaning.
 
 For example, let's take the phrase `"hot dog"` and see what its embedding looks like when processed through [OpenAI](https://openai.com/)'s `text-embedding-3-small` model:
-
 
 ```python
 embedding('hot dog')
@@ -41,6 +39,7 @@ The impact of each dimension on meaning isn't explicitly labeled (like "happines
 Beyond embedding a single concept in space. A powerful feature of embeddings is that we can compare concepts mathematically. One popular technique is [cosine similarity](https://en.wikipedia.org/wiki/Cosine_similarity), which measures the angle between two vectors rather than their literal distance.
 
 Cosine similarity returns values from -1 to 1:
+
 * Closer to 1 indicates that the vectors are pointed in the same direction (meaning very similar)
 * Closer to 0 indicates that they are orthogonal or have no similarity
 * Closer to -1 indicates that they are in exactly opposite directions (meaning they are dissimilar)
@@ -74,6 +73,7 @@ Let's embed the word `"burrito"` and see which other words from our list are mos
 ```python
 find_similar_concepts(embedding('burrito'), filter=["burrito"])
 ```
+
 |   | word         | embedding                                           | similarity |
 |---|--------------|-----------------------------------------------------|------------|
 | 0 | cheeseburger | [-0.025503935292363167, -0.05670874938368797, ...]  | 0.512808   |
@@ -107,7 +107,6 @@ find_similar_concepts(
 | 3 | chocolate      | [0.013673103414475918, -0.04669247195124626, ...]  | 0.536867   |
 | 4 | hot chocolate  | [-0.04974162578582764, -0.04538385942578316, ...]  | 0.518881   |
 
-
 ```python
 find_similar_concepts(
   embedding('father') - embedding('man') + embedding('woman'),
@@ -122,7 +121,6 @@ find_similar_concepts(
 | 2 | wife     | [0.017703169956803322, 0.0015181683702394366, ...] | 0.579919    |
 | 3 | queen    | [0.043817322701215744, -0.03984493762254715, ...]  | 0.423459    |
 | 4 | friend   | [-0.017377346754074097, -0.03304498642683029, ...] | 0.411813    |
-
 
 These examples further demonstrate how embeddings capture both meaning and similarity. But in language, meaning isn't just about what words are present — it's also about where they appear. The phrases "dog bites man" and "man bites dog" contain the same words, but carry very different meanings.
 
@@ -161,7 +159,6 @@ find_similar_concepts(calculate_embedding('members of a family'))
 | 2 | mother   | [0.06384002417325974, 0.002675893483683467, ...]   | 0.433022   |
 | 3 | wife     | [0.017703169956803322, 0.0015181683702394366, ...] | 0.423573   |
 | 4 | husband  | [-0.019892802461981773, 0.03318863362073898, ...]  | 0.392540   |
-
 
 ### Take Away
 

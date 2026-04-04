@@ -13,7 +13,7 @@ module.exports = function(eleventyConfig) {
     eleventyConfig.addWatchTarget("posts");
     eleventyConfig.addCollection("posts", function(collection) {
         return collection.getFilteredByGlob("posts/**/index.md").sort(function (a, b) {
-            return a.date - b.date; // sort by date - ascending (oldest first)
+            return b.date - a.date; // sort by date - descending (newest first)
         });
     });
 }; 
