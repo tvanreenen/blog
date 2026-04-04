@@ -1,6 +1,6 @@
 ---
 title: From AeroSpace to Frame
-date: git Created
+date: 2026-03-03
 description: Open-source software, AI-augmented coding tools, and an experiment in tailoring software to fit my needs.
 ---
 

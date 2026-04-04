@@ -1,6 +1,6 @@
 ---
 title: When NumPy Is Already the Vector Database You Need
-date: git Created
+date: 2026-04-04
 description: I wrote a small Python vector-store module after watching modest workloads get heavy infrastructure — a personal story about how far NumPy can take you, and a lesson in choosing solutions that fit the problem.
 ---
 

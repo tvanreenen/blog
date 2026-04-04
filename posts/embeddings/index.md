@@ -1,6 +1,6 @@
 ---
 title: Embeddings — A Mathematical Rosetta Stone for Generative AI
-date: git Created
+date: 2025-05-03
 description: An introduction to how large language models represent meaning using high-dimensional vector space — showing how machines interpret, connect, and generate human-like language in context.
 ---
 
