@@ -29,9 +29,29 @@
             <div class="header-name">
                 <div>{{ site.name }}</div>
                 <div class="header-links">
-                    <a href="{{ site.linkedin }}">linkedin.com/in/tvanreenen</a>
-                    | 
-                    <a href="{{ site.github }}">github.com/tvanreenen</a>
+                    <span class="header-link-group">
+                        <a href="{{ site.linkedin }}" aria-label="tvanreenen on LinkedIn">
+                            {% include 'icons/linkedin.svg' %}
+                            <span>tvanreenen</span>
+                        </a>
+                        <span aria-hidden="true">|</span>
+                        <a href="{{ site.github }}" aria-label="tvanreenen on GitHub">
+                            {% include 'icons/github.svg' %}
+                            <span>tvanreenen</span>
+                        </a>
+                    </span>
+                    <span class="header-link-group">
+                        <span class="header-group-separator" aria-hidden="true">|</span>
+                        <a href="{{ site.companyUrl }}" aria-label="tvr.works website">
+                            {% include 'icons/world.svg' %}
+                            <span>tvr.works</span>
+                        </a>
+                        <span aria-hidden="true">|</span>
+                        <a href="{{ site.companyGithub }}" aria-label="tvr-works on GitHub">
+                            {% include 'icons/github.svg' %}
+                            <span>tvr-works</span>
+                        </a>
+                    </span>
                 </div>
             </div>
         </h1>
