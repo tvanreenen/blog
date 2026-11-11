@@ -1,6 +1,7 @@
 ---
 title: "Secure Passwords Don't Have to Be Hard to Use"
 date: 2026-11-10
+draft: true
 description: Inspired by XKCD, I built a small CLI in Go to explore password entropy and generate strong passphrases that are easy to type across devices or relay aloud when autofill isn't an option.
 ---
 
