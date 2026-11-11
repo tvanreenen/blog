@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="480" height="610" viewBox="0 0 480 610" role="img" aria-labelledby="title description">
+<title id="title">The same four bytes become one number</title>
+<desc id="description">Positions 11 through 14 keep the selected blue fill and the starting position 11 keeps its outline. Hexadecimal 41 39 7e ea becomes decimal 65, 57, 126, and 234. Multiply by 256 cubed, 256 squared, 256, and one. Add 1090519040 plus 3735552 plus 32256 plus 234 to get 1094287082.</desc>
+<style>svg{--bg:#fafaf9;--fg:#23272d;--secondary:#5d6570;--line:#cbd1d8;--soft:#efefed;--focus:#dce9fa;--accent:#1855a0;--change:#8c4209;--changefill:#ffead9}@media(prefers-color-scheme:dark){svg{--bg:#0d1117;--fg:#e6e9ee;--secondary:#aeb8c5;--line:#3d4857;--soft:#181f29;--focus:#223c5b;--accent:#b7d6ff;--change:#ffc28d;--changefill:#4b301e}}text{fill:var(--fg);font-family:system-ui,sans-serif;font-size:22px}.label{fill:var(--secondary);font-size:20px}.mono{font-family:Menlo,Consolas,monospace}.accent{fill:var(--accent)}.change{fill:var(--change)}</style>
+<rect width="480" height="610" fill="var(--bg)"/>
+<rect x="12" y="12" width="456" height="586" rx="8" fill="var(--bg)" stroke="var(--line)"/>
+<text x="240" y="40" class="" text-anchor="middle" style="font-size:22px">Read the four bytes as one number</text>
+<text x="240" y="70" class="label" text-anchor="middle" style="font-size:20px">Multiply by place value, then add</text>
+<rect x="20" y="88" width="440" height="92" rx="7" fill="none" stroke="var(--accent)" stroke-width="2"/>
+<rect x="24" y="92" width="432" height="84" rx="4" fill="var(--focus)"/>
+<text x="74" y="114" class="mono" text-anchor="middle" style="font-size:18px">11</text>
+<text x="74" y="146" class="mono" text-anchor="middle" style="font-size:28px">41</text>
+<path d="M126 134h22m-5-5 5 5-5 5" fill="none" stroke="var(--secondary)" stroke-width="2"/>
+<text x="164" y="141" class="label" text-anchor="start" style="font-size:20px">Decimal 65</text>
+<text x="180" y="165" class="mono" text-anchor="middle" style="font-size:20px">× 256³</text>
+<text x="354" y="165" class="mono" text-anchor="middle" style="font-size:20px">= 1090519040</text>
+<text x="240" y="197" class="label" text-anchor="middle" style="font-size:26px">+</text>
+<rect x="24" y="206" width="432" height="84" rx="4" fill="var(--focus)"/>
+<text x="74" y="228" class="mono" text-anchor="middle" style="font-size:18px">12</text>
+<text x="74" y="260" class="mono" text-anchor="middle" style="font-size:28px">39</text>
+<path d="M126 248h22m-5-5 5 5-5 5" fill="none" stroke="var(--secondary)" stroke-width="2"/>
+<text x="164" y="255" class="label" text-anchor="start" style="font-size:20px">Decimal 57</text>
+<text x="180" y="279" class="mono" text-anchor="middle" style="font-size:20px">× 256²</text>
+<text x="354" y="279" class="mono" text-anchor="middle" style="font-size:20px">= 3735552</text>
+<text x="240" y="311" class="label" text-anchor="middle" style="font-size:26px">+</text>
+<rect x="24" y="320" width="432" height="84" rx="4" fill="var(--focus)"/>
+<text x="74" y="342" class="mono" text-anchor="middle" style="font-size:18px">13</text>
+<text x="74" y="374" class="mono" text-anchor="middle" style="font-size:28px">7e</text>
+<path d="M126 362h22m-5-5 5 5-5 5" fill="none" stroke="var(--secondary)" stroke-width="2"/>
+<text x="164" y="369" class="label" text-anchor="start" style="font-size:20px">Decimal 126</text>
+<text x="180" y="393" class="mono" text-anchor="middle" style="font-size:20px">× 256</text>
+<text x="354" y="393" class="mono" text-anchor="middle" style="font-size:20px">= 32256</text>
+<text x="240" y="425" class="label" text-anchor="middle" style="font-size:26px">+</text>
+<rect x="24" y="434" width="432" height="84" rx="4" fill="var(--focus)"/>
+<text x="74" y="456" class="mono" text-anchor="middle" style="font-size:18px">14</text>
+<text x="74" y="488" class="mono" text-anchor="middle" style="font-size:28px">ea</text>
+<path d="M126 476h22m-5-5 5 5-5 5" fill="none" stroke="var(--secondary)" stroke-width="2"/>
+<text x="164" y="483" class="label" text-anchor="start" style="font-size:20px">Decimal 234</text>
+<text x="180" y="507" class="mono" text-anchor="middle" style="font-size:20px">× 1</text>
+<text x="354" y="507" class="mono" text-anchor="middle" style="font-size:20px">= 234</text>
+<text x="240" y="574" class="mono" text-anchor="middle" style="font-size:30px">= 1094287082</text>
+</svg>

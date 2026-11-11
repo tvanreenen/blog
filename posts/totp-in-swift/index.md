@@ -1,0 +1,108 @@
+---
+title: Making Sense of One-Time Passwords
+date: 2026-11-10
+interactive: hmac
+description: How your authenticator and a website independently calculate the same six-digit code.
+---
+
+By now, I think most of us understand why multi-factor authentication matters: a stolen password shouldn't be enough to open an account. We've used text messages, authenticator codes, push approvals, and security keys to add another kind of proof.
+
+Passkeys are where we're heading. They can replace the password-plus-code routine with a credential unlocked by a PIN or biometric, and [bind authentication to the legitimate site](https://fidoalliance.org/passkeys/) to resist phishing. Adoption is growing, though [support across the web remains uneven](https://arxiv.org/abs/2602.15135). [FIDO's 2026 Passkey Index](https://fidoalliance.org/passkey-index-2026/) reports 36% of successful sign-ins at participating services used a passkey.
+
+**TOTP**, or **time-based one-time password**, remains widely supported. It's the familiar rotating code in an authenticator app, usually six digits, that can be autofilled alongside a password.
+
+TOTP has tradeoffs. A fake login page can [capture and relay a code while it's valid](https://pages.nist.gov/800-63-4/sp800-63b.html#phishing-resistance). Keeping the password and TOTP secret in one vault makes autofill convenient, but a compromised vault can expose both. A separately protected authenticator keeps the TOTP secret outside that vault.
+
+I wanted to add those familiar authenticator codes to [Key](/posts/key-secret-mananger/). A library could have handled it, but it felt like a good excuse to get into the weeds and understand how those six digits are calculated. I thought I'd share what I learned here.
+
+## Two copies of a secret, one shared clock
+
+During setup, the service generates a random secret, keeps a copy, and gives your authenticator a copy. After that, neither side needs to send the other a fresh code every thirty seconds. Both calculate the same answer independently using the secret, time window, and agreed settings.
+
+TOTP grew out of [HOTP in 2005](https://www.rfc-editor.org/rfc/rfc4226.html), which combines a shared secret with an advancing counter. [TOTP followed in 2011](https://www.rfc-editor.org/rfc/rfc6238.html), deriving that counter from the clock so both sides can find it independently. Thirty seconds is the default time step.
+
+For this example, we start with 20 random bytes, or 160 bits. A bit is a `0` or `1`; a byte holds eight bits. We write each byte as two **hexadecimal** characters, using `0` through `9`, then `a` through `f` for values ten through fifteen.
+
+Hexadecimal makes the individual bytes easy to inspect. Authenticator setup conventionally represents the secret as **Base32** text, using an alphabet of `A` through `Z` and `2` through `7`. Those 32 symbols represent five bits each, so our 160 bits become 32 characters. The secret hasn't changed; only its representation has. Encoding it doesn't encrypt it.
+
+![Encode the 20 original secret bytes as the 32-character Base32 string GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ. The representation changes, but the secret stays the same.](totp-base32.svg#interactive-hmac-base32)
+
+You can enter that text directly into an authenticator. To save you typing, a service can package it into an [`otpauth` setup URI](https://github.com/google/google-authenticator/wiki/Key-Uri-Format), alongside an account label and the calculation settings. A setup link passes that URI to an authenticator app. A QR code carries the same URI so the app can read it through a camera. The QR code is another way to transfer the secret and its settings; it doesn't generate the six-digit codes.
+
+Here's the setup URI for our example, with its parts on separate lines. The secret and QR code follow the bytes above:
+
+![An otpauth URI carries the Base32 secret, a Blog demo account label, and settings for SHA-1, six digits, and a 30-second step. The QR code encodes that same URI.](totp-setup.svg#interactive-hmac-setup)
+
+## Following the math to six digits
+
+Let's follow one example all the way through, using HMAC-SHA1, six digits, and a 30-second step. These are the settings used by Key; other services can use different settings, including SHA-256 or SHA-512. The walkthrough uses the secret above and the current time. Generate a new secret and every calculation below follows it.
+
+We need to turn those two inputs, a secret and a time, into one short answer. There are five stages along the way.
+
+### 1. Turn the time into a counter
+
+Unix time, `t`, counts seconds from the start of 1970 in UTC. Each break below starts a new 30-second window. The current time sits between two of those boundaries. Divide `t` by 30 and round down to find the window number:
+
+![The first time window contains seconds 0 through 29; the next contains 30 through 59. Time 59 is in window 1 when counting from zero: 59 divided by 30 is 1.966..., rounded down to 1.](totp-clock.svg#interactive-hmac-clock)
+
+Every instant within a given 30-second window has the same counter. The clocks don't need to agree on the exact second, provided both fall within that same window. We'll turn that number into bytes in the next step.
+
+### 2. Combine the secret and counter with HMAC
+
+HMAC is a keyed hash function: it produces a fixed-length result from a **secret key** and a **message**. The same inputs always give the same result, but without the key, knowing the message doesn't let you predict the answer.
+
+Both inputs enter as bytes. We decode the Base32 secret from setup to recover the original key bytes. The message is the counter from `floor(t ÷ 30)`, encoded as an eight-byte integer, most significant byte first. Using the same width and byte order ensures both sides feed HMAC the same message. The key stays fixed; the message changes as the clock advances.
+
+![Two input containers show the before and after: decode the Base32 secret to recover 20 key bytes; encode decimal counter 1 as eight bytes, 00 00 00 00 00 00 00 01. These distinct inputs enter HMAC-SHA1 and produce 20 bytes.](totp-hmac.svg#interactive-hmac)
+
+The counter isn't secret. Anyone can work out what time window we're in, but calculating the matching result also requires the key. We now have a newly calculated 20-byte result tied to both inputs, written in hexadecimal. Its length comes from SHA-1, independently of the secret's length. The remaining operations make it short enough to type.
+
+### 3. Choose four bytes from the result
+
+We already have an unpredictable 160-bit answer. Now we need a smaller value for the arithmetic that will produce a short code. HOTP takes four of the 20 bytes, giving us 32 bits to work with.
+
+The authenticator and server must choose the same four bytes. HOTP lets the result choose its own slice: the last byte points to the starting position. Both sides can repeat that rule independently, without exchanging another value.
+
+The blue highlight shows the four bytes we keep. The numbered guide underneath traces how the last byte picks its starting position:
+
+![The last byte ab is binary 1010 1011. Keep the rightmost four bits, 1011. Their place values give 8 + 0 + 2 + 1 = 11. Start at byte position 11 and keep positions 11 through 14: c1 39 7e ea.](totp-select.svg#interactive-hmac-select)
+
+When the clock enters a new time window, or we generate a new secret, the HMAC result changes. Its last four bits can change too, moving the highlighted slice. Four bits give 16 possible starts, from 0 to 15, all leaving room for four bytes inside the result.
+
+This is [dynamic truncation](https://www.rfc-editor.org/rfc/rfc4226.html#section-5.3). The moving position adds no new randomness; HMAC supplies the unpredictability. It's the extraction rule HOTP specifies, giving both sides the same slice without exchanging a separate starting position.
+
+### 4. Turn those four bytes into a number
+
+The four selected bytes give us 32 bits. In a signed 32-bit integer, the leftmost bit determines whether the number is negative. HOTP clears that bit so implementations agree on a non-negative value for the arithmetic that follows. That leaves 31 usable bits. If the first bit is already zero, it stays zero; every other bit keeps its value:
+
+![The four selected bytes are shown before and after. Only the first bit changes from one to zero: c1 becomes 41, while 39, 7e, and ea stay the same.](totp-mask.svg#interactive-hmac-mask)
+
+To read those four bytes as one number, each position is worth 256 times the position to its right. It's the same place-value idea as hundreds, tens, and units in decimal, using 256 because a byte has 256 possible values. The tiles show each hex byte as a decimal value, its place value, and its contribution to the total:
+
+![Hex bytes 41 39 7e ea become decimal values 65, 57, 126, and 234. Multiply by 256 cubed, 256 squared, 256, and 1, then add the four contributions to get 1094287082.](totp-number.svg#interactive-hmac-number)
+
+Both the bit mask and the byte order come from [HOTP's truncation procedure](https://www.rfc-editor.org/rfc/rfc4226.html#section-5.3).
+
+### 5. Keep the last six decimal digits
+
+Modulo keeps the remainder after division. Dividing by one million separates the whole millions from a remainder between 0 and 999999. In decimal, that means keeping the last six digits:
+
+![Split 1094287082 into 1094 whole millions and remainder 287082. Discard the whole millions and keep the six highlighted digits as the code.](totp-remainder.svg#interactive-hmac-remainder)
+
+If the remainder has fewer than six digits, pad it with leading zeros: `42`, for example, becomes `000042`.
+
+The website calculates its expected result using the same inputs and compares it with the code you submit. The clock determines the current code; the service enforces one-time use by rejecting a code it has already accepted while that code remains valid. It may also check nearby time windows to allow for clock differences and transmission delay. [RFC 6238 describes these verification rules](https://www.rfc-editor.org/rfc/rfc6238.html#section-5.2).
+
+## How can six digits be enough?
+
+There are only a million six-digit strings, about 20 bits of possibilities. That's much smaller than the space we want for a long-lived password. The short code and the underlying secret have different jobs: one is entered briefly, while the other allows future codes to be calculated.
+
+For one accepted code, a random guess has roughly a one-in-a-million chance. Allow more attempts or accept more time windows and those odds improve for the attacker. Expiry, rejection of reused codes, and server-side rate limits are part of the protection. The code also doesn't prevent phishing: someone can relay it while it's valid. [NIST's OTP guidance](https://pages.nist.gov/800-63-4/sp800-63b.html#s-3-1-4) treats these controls and limitations as part of the authentication design.
+
+## Adding TOTP to Key
+
+I could have used a library. My initial [implementation in Key](https://github.com/tvr-works/key/blob/main/Sources/KeyCore/TOTPGenerator.swift) came in under 110 lines of Swift, including the Base32 decoder. CryptoKit handles HMAC; the code around it handles the secret, counter, truncation, and formatting.
+
+Key has one fewer dependency, and I understand TOTP a lot better now.
+
+Just don't count the time spent researching it, writing the code, and then writing and building this article.
