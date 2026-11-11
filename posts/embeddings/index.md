@@ -4,6 +4,8 @@ date: 2025-05-03
 description: An introduction to how large language models represent meaning using high-dimensional vector space — showing how machines interpret, connect, and generate human-like language in context.
 ---
 
+![Milk and espresso vectors combine to point toward a cappuccino.](hero.webp)
+
 This is one of those posts that I put together for my own edification in my personal [Obsidian](https://obsidian.md/) vault. But it ulimately derived from a [Jupyter](https://jupyter.org/) notebook that I put together when I was first trying to understand some of the foundational concepts behind generative AI.
 
 One of the first big questions I had was:

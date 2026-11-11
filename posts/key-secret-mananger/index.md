@@ -4,7 +4,7 @@ date: 2026-04-04
 description: key is a macOS CLI for any secret you care about - passwords, tokens, OTP codes, whatever you need close to the shell. I built it to keep Unix composability with native macOS unlock, and learned to favor a trust model you can explain and audit.
 ---
 
-![Key](hero.png)
+![A fingerprint-protected Key vault connected to main, feature/api, and fix/auth terminal workspaces.](hero.webp)
 
 While passkeys and passwordless tech continue to [make real progress](https://securityboulevard.com/2026/03/passkeys-hit-critical-mass-microsoft-auto-enables-for-millions-87-of-companies-deploy-as-passwords-near-end-of-life/), passwords are still widely prevalent, and there is a broad surface of authentication that doesn't map to passkeys: API keys, OAuth client secrets, TOTP seeds, recovery codes, and SSH private keys. And with everyone trying their hand at building things these days, without discipline and strong tools you end up with credentials scattered all over the place.
 
