@@ -1,3 +1,11 @@
 _site/
 .DS_Store
 .obsidian/
+migration/node_modules/
+migration/dist/
+migration/.tanstack/
+migration/src/routeTree.gen.ts
+migration/test-results/
+migration/playwright-report/
+migration/public/
+migration/src/content/manifest.gen.json
