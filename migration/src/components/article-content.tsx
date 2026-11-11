@@ -113,11 +113,13 @@ function ArticleFigure({
 export const articleComponents: MDXComponents = {
   figure: ArticleFigure,
   pre: ArticleCodeBlock,
+  // oxlint-disable jsx-a11y/no-noninteractive-tabindex, jsx-a11y/prefer-tag-over-role -- This labelled group needs keyboard focus to scroll wide tables, including in Safari.
   table: (props) => (
     <div className="typeset-scroll" role="group" aria-label="Scrollable data table" tabIndex={0}>
       <table {...props} />
     </div>
   ),
+  // oxlint-enable jsx-a11y/no-noninteractive-tabindex, jsx-a11y/prefer-tag-over-role
   th: ({ children, ...props }) => (
     <th scope="col" {...props}>
       {Children.toArray(children).some((child) => typeof child !== "string" || child.trim()) ? (

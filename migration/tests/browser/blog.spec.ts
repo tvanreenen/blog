@@ -11,7 +11,7 @@ test("homepage navigation, article accessibility, and responsive reading", async
   page.on("pageerror", (error) => errors.push(error.message));
   await page.goto("/");
   await expect(page).toHaveTitle("Tim VanReenen");
-  await expect(page.locator(".post-list > [role=listitem]")).toHaveCount(7);
+  await expect(page.locator("ul.post-list > li")).toHaveCount(7);
   await page.keyboard.press("Tab");
   await expect(page.getByRole("link", { name: "Skip to content" })).toBeFocused();
   await page.keyboard.press("Enter");
@@ -47,6 +47,30 @@ test("theme preference follows the system, can be changed, and survives reload",
   expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
   await page.getByRole("button", { name: "Theme: dark. Switch to system", exact: true }).click();
   await expect(page.locator("html")).not.toHaveAttribute("data-theme");
+});
+
+test("the prerendered footer hydrates when the browser reports a different year", async ({
+  page,
+  request,
+}) => {
+  const html = await (await request.get("/")).text();
+  const year = /©(?:\s|<!--.*?-->)*(\d{4})/.exec(html)?.[1];
+  expect(year).toBeDefined();
+  await page.addInitScript(
+    (clientYear) => {
+      Date.prototype.getUTCFullYear = () => clientYear;
+    },
+    Number(year) + 5,
+  );
+  const errors: string[] = [];
+  page.on("pageerror", (error) => errors.push(error.message));
+  page.on("console", (message) => {
+    if (message.type() === "error") errors.push(message.text());
+  });
+  await page.goto("/");
+  await page.getByRole("button", { name: "Theme: system. Switch to light", exact: true }).click();
+  await expect(page.locator("html")).toHaveAttribute("data-theme", "light");
+  expect(errors).toEqual([]);
 });
 
 test("copy retains code text and blank lines; wrap control changes overflow mode", async ({

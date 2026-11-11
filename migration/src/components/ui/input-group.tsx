@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 
+/* oxlint-disable jsx-a11y/prefer-tag-over-role -- This group composes a single input with its addons; it is not a fieldset of separate controls. */
 function InputGroup({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
@@ -19,6 +20,8 @@ function InputGroup({ className, ...props }: React.ComponentProps<"div">) {
     />
   );
 }
+
+/* oxlint-enable jsx-a11y/prefer-tag-over-role */
 
 const inputGroupAddonVariants = cva(
   "flex h-auto cursor-text items-center justify-center gap-2 py-1.5 text-sm font-medium text-muted-foreground select-none group-data-[disabled=true]/input-group:opacity-50 [&>kbd]:rounded-[calc(var(--radius)-5px)] [&>svg:not([class*='size-'])]:size-4",
@@ -39,6 +42,7 @@ const inputGroupAddonVariants = cva(
   },
 );
 
+/* oxlint-disable jsx-a11y/prefer-tag-over-role, jsx-a11y/click-events-have-key-events, jsx-a11y/no-noninteractive-element-interactions -- The addon only forwards pointer focus to the native input; keyboard users reach that input directly. */
 function InputGroupAddon({
   className,
   align = "inline-start",
@@ -60,6 +64,8 @@ function InputGroupAddon({
     />
   );
 }
+
+/* oxlint-enable jsx-a11y/prefer-tag-over-role, jsx-a11y/click-events-have-key-events, jsx-a11y/no-noninteractive-element-interactions */
 
 const inputGroupButtonVariants = cva("flex items-center gap-2 text-sm shadow-none", {
   variants: {

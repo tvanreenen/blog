@@ -6,9 +6,10 @@ import { cn } from "cn";
 
 import { Separator } from "@/components/ui/separator";
 
-function ItemGroup({ className, ...props }: React.ComponentProps<"div">) {
+/* oxlint-disable jsx-a11y/no-redundant-roles -- Safari needs explicit list semantics when list markers are hidden. */
+function ItemGroup({ className, ...props }: React.ComponentProps<"ul">) {
   return (
-    <div
+    <ul
       role="list"
       data-slot="item-group"
       className={cn(
@@ -19,6 +20,8 @@ function ItemGroup({ className, ...props }: React.ComponentProps<"div">) {
     />
   );
 }
+
+/* oxlint-enable jsx-a11y/no-redundant-roles */
 
 function ItemSeparator({ className, ...props }: React.ComponentProps<typeof Separator>) {
   return (

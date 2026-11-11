@@ -42,6 +42,7 @@ export function HmacExampleProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!globalThis.crypto?.subtle) return;
     try {
+      // oxlint-disable-next-line react/set-state-in-effect -- Hydrate the static RFC example before activating browser-only randomness and time.
       setSecret(generateTotpSecret());
       setUnixTime(Math.floor(Date.now() / 1000));
       setEnabled(true);

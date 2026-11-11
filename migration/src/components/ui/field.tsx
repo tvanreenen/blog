@@ -64,6 +64,7 @@ const fieldVariants = cva("group/field flex w-full gap-2 data-[invalid=true]:tex
   },
 });
 
+/* oxlint-disable jsx-a11y/prefer-tag-over-role -- A Field groups one control with its label and description; FieldSet owns native fieldset semantics. */
 function Field({
   className,
   orientation = "vertical",
@@ -79,6 +80,8 @@ function Field({
     />
   );
 }
+
+/* oxlint-enable jsx-a11y/prefer-tag-over-role */
 
 function FieldContent({ className, ...props }: React.ComponentProps<"div">) {
   return (

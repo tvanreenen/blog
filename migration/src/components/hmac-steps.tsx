@@ -30,6 +30,7 @@ export function HmacClock() {
     .filter((value) => value >= 0n && value <= MAX_COUNTER);
   return (
     <>
+      {/* oxlint-disable jsx-a11y/prefer-tag-over-role -- This named group describes a time-window visualization, not form fields. */}
       <div
         className="hmac-clock-viewport"
         role="group"
@@ -63,6 +64,7 @@ export function HmacClock() {
           <span>Now · t</span>
         </div>
       </div>
+      {/* oxlint-enable jsx-a11y/prefer-tag-over-role */}
       <p className="hmac-caption hmac-clock-caption">
         Next window in {30 - elapsed} {30 - elapsed === 1 ? "second" : "seconds"}.
       </p>
@@ -103,6 +105,7 @@ export function HmacSelect() {
           <CardTitle>Find the starting position</CardTitle>
         </CardHeader>
         <CardContent>
+          {/* oxlint-disable-next-line jsx-a11y/no-redundant-roles -- Safari needs explicit list semantics when list markers are hidden. */}
           <ol className="hmac-selection-steps" role="list">
             <li>
               <div className="hmac-selection-step">
@@ -229,7 +232,7 @@ export function HmacMask() {
     <Card size="sm" className="hmac-math-card">
       <CardHeader>
         <CardTitle>Clear the first bit</CardTitle>
-        <CardDescription>32 bits → 31 usable bits</CardDescription>
+        <CardDescription size="sm">32 bits → 31 usable bits</CardDescription>
       </CardHeader>
       <CardContent className="hmac-math-content">
         <span className="hmac-output-label">Before · the four selected bytes</span>
@@ -266,7 +269,7 @@ export function HmacNumber() {
     <Card size="sm" className="hmac-math-card">
       <CardHeader>
         <CardTitle>Read the four bytes as one number</CardTitle>
-        <CardDescription>Multiply each byte by its place value, then add</CardDescription>
+        <CardDescription size="sm">Multiply each byte by its place value, then add</CardDescription>
       </CardHeader>
       <CardContent className="hmac-math-content">
         <dl className="hmac-byte-values">
@@ -322,7 +325,9 @@ export function HmacRemainder() {
     <Card size="sm" className="hmac-math-card">
       <CardHeader>
         <CardTitle>Keep six decimal digits</CardTitle>
-        <CardDescription>Split the number into whole millions and a remainder</CardDescription>
+        <CardDescription size="sm">
+          Split the number into whole millions and a remainder
+        </CardDescription>
       </CardHeader>
       <CardContent className="hmac-math-content">
         <div className="hmac-number-cut">

@@ -21,7 +21,13 @@ const profiles = [
   },
 ];
 
-export function SiteLayout({ children }: { children: ReactNode }) {
+export function SiteLayout({
+  children,
+  copyrightYear,
+}: {
+  children: ReactNode;
+  copyrightYear: number;
+}) {
   return (
     <div className="site-layout">
       <a className="skip-link" href="#main">
@@ -53,7 +59,7 @@ export function SiteLayout({ children }: { children: ReactNode }) {
       </main>
       <footer className="site-footer">
         <p>
-          © {new Date().getUTCFullYear()} {site.name}. All rights reserved.
+          © {copyrightYear} {site.name}. All rights reserved.
         </p>
       </footer>
     </div>

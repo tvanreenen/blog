@@ -34,6 +34,10 @@ An article with `interactive: hmac` in its frontmatter shares one browser-only e
 
 Article rendering supports keyboard-scrollable tables, hidden labels for the existing unnamed row-index headers, code copying and wrapping, system/light/dark themes, and a skip link. Article content is code-split away from the homepage. All article bodies currently share the article-route chunk.
 
+Card accents and description sizes are explicit component props. Diagram CSS owns the data layout and color tokens. The writing index uses a native list, with each separator inside its corresponding list item.
+
+The theme toggle subscribes to the document's theme attribute with `useSyncExternalStore`, using the same initial snapshot for server rendering and hydration. The root route supplies the copyright year as loader data so the initial browser render reuses the server's value.
+
 Generated public assets and the content manifest are recreated by development, typechecking, and builds. Edit the original posts/assets or maintained source files rather than those generated copies. Font and shadcn notices are copied into the static artifact's `licenses/` directory; Vite also generates bundled dependency notices.
 
 ## Validation
@@ -45,6 +49,8 @@ npm run test:browser
 ```
 
 The checks cover formatting, linting, TypeScript, content metadata, and Markdown/MDX compilation. Playwright exercises the static artifact in desktop and mobile Chromium, including client navigation, all existing articles and images, axe accessibility checks, theme persistence, exact code copying, clipboard denial, wrapping, no-JavaScript reading, preview indexing, and 404 delivery. Install Playwright's Chromium browser if it is not already available: `npx playwright install chromium`.
+
+Oxlint enables React and JSX accessibility correctness rules alongside its default plugins. Warnings and unused suppression comments fail the lint command. Inline exceptions are limited to the browser-only TOTP initialization after hydration, labelled data and field groups, accessible inline SVG, keyboard-scrollable code and tables, Safari's explicit list roles, and input addons that forward pointer focus to a separately keyboard-accessible input. Each exception names its rule and explains the behavior it preserves. Browser tests also cover hydration when the browser reports a different year from the prerendered page.
 
 The dependency audit currently reports six low/moderate advisories in the development-only shadcn CLI dependency chain. The frontmatter plugin uses the patched 6.0.0 release. Recheck the CLI upstream rather than applying npm's proposed breaking downgrade to shadcn 1.0.0.
 

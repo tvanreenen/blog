@@ -25,6 +25,7 @@ function SetupQr({ uri }: { uri: string }) {
   return (
     <div className="hmac-qr">
       {current?.path ? (
+        /* oxlint-disable jsx-a11y/prefer-tag-over-role -- The generated QR remains inline SVG with an accessible image role. */
         <svg
           role="img"
           aria-label="QR code for this setup URI"
@@ -35,11 +36,12 @@ function SetupQr({ uri }: { uri: string }) {
           <path d={current.path} fill="#000" />
         </svg>
       ) : (
-        <p className="hmac-caption" role="status">
+        /* oxlint-enable jsx-a11y/prefer-tag-over-role */
+        <output className="hmac-caption">
           {current?.failed
             ? "QR unavailable. Use the setup link or enter the secret manually."
             : "Generating QR code…"}
-        </p>
+        </output>
       )}
       <a href={uri}>Open in an authenticator</a>
     </div>

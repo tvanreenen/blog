@@ -6,6 +6,7 @@ import geistFont from "@fontsource-variable/geist/files/geist-latin-wght-normal.
 import { themeScript } from "../components/theme-toggle";
 
 export const Route = createRootRoute({
+  loader: () => ({ copyrightYear: new Date().getUTCFullYear() }),
   head: () => ({
     meta: [
       { charSet: "utf-8" },
@@ -24,6 +25,7 @@ export const Route = createRootRoute({
 });
 
 function RootDocument() {
+  const { copyrightYear } = Route.useLoaderData();
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
@@ -31,7 +33,7 @@ function RootDocument() {
         <HeadContent />
       </head>
       <body>
-        <SiteLayout>
+        <SiteLayout copyrightYear={copyrightYear}>
           <Outlet />
         </SiteLayout>
         <Scripts />

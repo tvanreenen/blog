@@ -15,12 +15,14 @@ import { HmacBytes } from "./hmac-bytes";
 import { encodeCounter, toHex } from "../lib/hmac";
 import { encodeBase32 } from "../lib/totp-secret";
 
+/* oxlint-disable jsx-a11y/prefer-tag-over-role -- These cards label read-only data groups, not form fieldsets. */
 export function HmacBase32() {
   const { secret, secretBytes, regenerate, generationError } = useHmacExample();
   return (
     <Card
       size="sm"
-      className="hmac-input-card hmac-key-input hmac-base32-card"
+      accent="var(--hmac-key)"
+      className="hmac-input-card hmac-base32-card"
       role="group"
       aria-label="Secret encoding"
     >
@@ -59,6 +61,8 @@ export function HmacBase32() {
   );
 }
 
+/* oxlint-enable jsx-a11y/prefer-tag-over-role */
+
 function InputBytes({ bytes, label }: { bytes?: readonly number[]; label: string }) {
   return (
     <output className="hmac-input-bytes" aria-label={label} aria-live="off">
@@ -71,6 +75,7 @@ function InputBytes({ bytes, label }: { bytes?: readonly number[]; label: string
   );
 }
 
+/* oxlint-disable jsx-a11y/prefer-tag-over-role -- These cards label read-only data groups, not form fieldsets. */
 export function HmacExplorer() {
   const { result, pending, error, secretBytes, counter, parsedCounter } = useHmacExample();
   const message =
@@ -81,13 +86,14 @@ export function HmacExplorer() {
         <div className="hmac-inputs">
           <Card
             size="sm"
-            className="hmac-input-card hmac-key-input"
+            accent="var(--hmac-key)"
+            className="hmac-input-card"
             role="group"
             aria-label="Secret key input"
           >
             <CardHeader>
               <CardTitle>K · secret key</CardTitle>
-              <CardDescription>From setup · stays fixed</CardDescription>
+              <CardDescription size="xs">From setup · stays fixed</CardDescription>
             </CardHeader>
             <CardContent className="hmac-input-content">
               <div className="hmac-input-source">
@@ -108,13 +114,14 @@ export function HmacExplorer() {
           </Card>
           <Card
             size="sm"
+            accent="var(--hmac-message)"
             className="hmac-input-card hmac-counter-input"
             role="group"
             aria-label="Counter message input"
           >
             <CardHeader>
               <CardTitle>C · counter message</CardTitle>
-              <CardDescription>From clock · changes every 30s</CardDescription>
+              <CardDescription size="xs">From clock · changes every 30s</CardDescription>
             </CardHeader>
             <CardContent className="hmac-input-content">
               <div className="hmac-input-source">
@@ -145,11 +152,12 @@ export function HmacExplorer() {
           <div className="hmac-output-label">20-byte result</div>
           <HmacBytes bytes={result?.bytes} label="HMAC result" />
         </div>
-        <div role="status" className="sr-only">
+        <output className="sr-only">
           {result ? "HMAC result updated." : pending ? "Calculating." : ""}
-        </div>
+        </output>
         {error ? <FieldError>{error}</FieldError> : null}
       </div>
     </>
   );
 }
+/* oxlint-enable jsx-a11y/prefer-tag-over-role */

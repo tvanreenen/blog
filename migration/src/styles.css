@@ -351,19 +351,6 @@ main:focus {
 }
 .hmac-input-card {
   min-width: 0;
-  border-top: 2px solid var(--hmac-input-color);
-}
-.hmac-key-input {
-  --hmac-input-color: var(--hmac-key);
-}
-.hmac-counter-input {
-  --hmac-input-color: var(--hmac-message);
-}
-.hmac-input-card [data-slot="card-title"] {
-  color: var(--hmac-input-color);
-}
-.hmac-input-card [data-slot="card-description"] {
-  font-size: 0.75rem;
 }
 .hmac-input-content {
   display: flex;
@@ -393,7 +380,7 @@ main:focus {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  color: var(--hmac-input-color);
+  color: var(--card-accent);
   font-size: 0.8rem;
 }
 .hmac-conversion > svg {
@@ -830,9 +817,6 @@ main:focus {
   display: flex;
   flex-direction: column;
   gap: 1rem;
-}
-.hmac-math-card [data-slot="card-description"] {
-  font-size: 0.8rem;
 }
 .hmac-flow-label {
   display: flex;
