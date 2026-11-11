@@ -1,21 +1,28 @@
-.PHONY: help serve watch build clean
+.PHONY: help serve build preview check pages-build clean
 
 help:
-	@echo "Available targets:"
-	@echo "  help    - Show this help message"
-	@echo "  serve   - Start Eleventy development server with live reload"
-	@echo "  watch   - Watch for changes and rebuild without serving"
-	@echo "  build   - Build the site without serving"
-	@echo "  clean   - Remove the _site directory"
+	@echo "serve       Start local development with drafts"
+	@echo "build       Build the static site without drafts"
+	@echo "preview     Serve the built static artifact"
+	@echo "check       Run formatting, lint, types, and unit tests"
+	@echo "pages-build Install dependencies, check, and build for Cloudflare Pages"
+	@echo "clean       Remove generated build and content files"
 
-serve: clean
-	npx @11ty/eleventy --serve
+serve:
+	npm run dev
 
-watch: clean
-	npx @11ty/eleventy --watch
+build:
+	npm run build
 
-build: clean
-	npx @11ty/eleventy
+preview:
+	npm run preview
+
+check:
+	npm run check
+
+pages-build:
+	npm ci --include=dev && npm run check && npm run build
 
 clean:
-	rm -rf _site/ 
+	rm -rf dist .tanstack public/posts public/licenses
+	rm -f src/routeTree.gen.ts src/content/manifest.gen.json src/content/articles.gen.ts

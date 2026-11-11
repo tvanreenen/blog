@@ -4,7 +4,7 @@ date: 2026-04-04
 description: key is a macOS CLI for any secret you care about - passwords, tokens, OTP codes, whatever you need close to the shell. I built it to keep Unix composability with native macOS unlock, and learned to favor a trust model you can explain and audit.
 ---
 
-![Key](hero.png)
+![A fingerprint-protected Key vault connected to main, feature/api, and fix/auth terminal workspaces.](hero.webp)
 
 While passkeys and passwordless tech continue to [make real progress](https://securityboulevard.com/2026/03/passkeys-hit-critical-mass-microsoft-auto-enables-for-millions-87-of-companies-deploy-as-passwords-near-end-of-life/), passwords are still widely prevalent, and there is a broad surface of authentication that doesn't map to passkeys: API keys, OAuth client secrets, TOTP seeds, recovery codes, and SSH private keys. And with everyone trying their hand at building things these days, without discipline and strong tools you end up with credentials scattered all over the place.
 
@@ -49,37 +49,7 @@ This split is the primary security boundary. Keychain access is gated by signing
 
 The vault is straightforward: one randomly generated 256-bit symmetric key, stored in Keychain, encrypts all secrets individually as AES-256-GCM JSON files. Standard primitives, no custom cryptography. If you ever need to decrypt outside `key`, the README walks through it — parse the JSON, base64-decode the nonce and ciphertext, split the auth tag, decrypt with any AES-GCM implementation. The vault key is the only thing that needs protecting, and it lives in Keychain behind your biometrics.
 
-## Two Unexpected Deep Dives
-
-Along the way, two areas pulled me deeper than I'd planned. In both cases I ended up implementing from scratch — and came away actually understanding what I was running.
-
-### Entropy and the XKCD Argument
-
-Most password managers ship their own generator. I deliberately left that out of this implementation — it felt more composable to let you pipe in whatever source you trust. While researching existing generators, I came across XKCD #936.
-
-XKCD #936 makes the case that four common words are simultaneously easier to remember and harder to crack than a short string of random-looking characters. It's a claim grounded in information theory. A generator's security comes from how much entropy it produces and whether selection is truly uniform.
-
-The math holds: using the EFF's large wordlist of 7,776 words, each word contributes log₂(7,776) ≈ 12.9 bits. Four words is roughly 51.7 bits; six is 77.6. The catch is that selection has to be uniform — any weighting or templating reduces the real entropy below what the math says. The randomness source matters too: you want the OS's CSPRNG (the cryptographically secure pseudorandom number generator seeded from hardware entropy), not a language runtime's default random, which can be predictable enough to undermine the whole point.
-
-I had the thought: why not literally implement this comic? I found some JS and Python side projects, but nothing like a clean, properly built CLI binary with the right primitives. It also seemed like a good excuse to get into some Go. The result is [xkcdpass](https://github.com/tvanreenen/xkcdpass) — a small Go binary that does exactly what the comic describes, with the EFF wordlist and the OS's CSPRNG. 
-
-Worth noting: if you're generating passwords only to store and copy them anyway, the memorability argument is largely moot. But the entropy holds up, it pipes in cleanly, and it was a fun thing to build properly.
-
-### Reading the TOTP Spec
-
-Of the common MFA mechanisms, TOTP is the one I've always preferred — computed and autofilled next to my credential, more portable than SMS, less hardware-dependent than a security key. I looked at SwiftOTP but it pulls in two transitive dependencies. I got curious about how the algorithm actually worked, and quickly became compelled to try implementing TOTP (RFC 6238) myself. Beyond the educational value, it would give me a simple, auditable, dependency-free binary.
-
-At a high level: take the Base32-encoded seed you're given as an HMAC-SHA1 key, compute HMAC over an 8-byte big-endian counter representing the current 30-second time window, then apply a dynamic truncation step to extract a 6-digit code.
-
-The whole thing came in under 110 lines of Swift, including the Base32 decoder. Small enough to audit in a sitting.
-
-### The Broader Point
-
-Neither of these was strictly necessary. I could have taken a dependency and shipped faster. But there's something I've come to value about following curiosity past the point where a library would have closed the question — reading the spec, understanding the primitive, building the thing. Not because it's always the right call, but because the understanding you walk away with is yours in a way that importing a package isn't.
-
-Both of these were exposure to areas I hadn't worked in before. I came away with a clearer mental model of entropy, randomness, and what "secure" actually means for a generator. With TOTP, I now understand exactly what's happening inside that six-digit code.
-
-If someone else finds `key`, `xkcdpass` or even just the narrow TOTP implementation useful, that's a bonus. But that wasn't really the point. The point was to stay curious, follow it somewhere, and build something — even if the only person it needed to work for was me.
+Two side projects grew out of this: [xkcdpass](https://github.com/tvanreenen/xkcdpass) and [Making Sense of One-Time Passwords](/posts/totp/).
 
 ## One Lesson Still In-Progress: The Multi-Device Security Model
 
