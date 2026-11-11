@@ -1,4 +1,4 @@
-import { encodeBase32 } from "./totp-secret";
+import { encodeBase32 } from "./secret";
 
 export const DEMO_ISSUER = "Blog demo";
 export const DEMO_ACCOUNT = "reader";

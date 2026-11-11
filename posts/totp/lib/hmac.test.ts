@@ -1,6 +1,6 @@
 import { createHmac } from "node:crypto";
 import { describe, expect, it } from "vitest";
-import { calculateHmac, EXAMPLE_DIGEST, EXAMPLE_KEY, MAX_COUNTER, toHex } from "../../src/lib/hmac";
+import { calculateHmac, EXAMPLE_DIGEST, EXAMPLE_KEY, MAX_COUNTER, toHex } from "./hmac";
 
 describe("interactive HMAC calculation", () => {
   it("reproduces the article's RFC example, message bytes, and six-digit code", async () => {

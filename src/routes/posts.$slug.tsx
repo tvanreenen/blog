@@ -1,11 +1,23 @@
-import { createFileRoute, notFound } from "@tanstack/react-router";
-import { findPost } from "../content/posts";
+import { createFileRoute, notFound, redirect } from "@tanstack/react-router";
+import { findPost, findPostAlias } from "../content/posts";
+import { articleEntries } from "../content/articles";
 import { PostPage } from "../components/post-page";
 import { pageHead } from "../site";
 
 export const Route = createFileRoute("/posts/$slug")({
   beforeLoad: ({ params }) => {
+    const alias = findPostAlias(params.slug);
+    if (alias)
+      throw redirect({
+        to: "/posts/$slug/",
+        params: { slug: alias.slug },
+        statusCode: 301,
+        replace: true,
+      });
     if (!findPost(params.slug)) throw notFound();
+  },
+  loader: async ({ params }) => {
+    await articleEntries[params.slug]?.preload?.();
   },
   head: ({ params }) => {
     const post = findPost(params.slug);

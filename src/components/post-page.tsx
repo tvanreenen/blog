@@ -1,16 +1,13 @@
 import { Link, notFound } from "@tanstack/react-router";
 import { ArrowLeft } from "lucide-react";
-import { articles } from "../content/articles.gen";
+import { articleEntries } from "../content/articles";
 import { findPost } from "../content/posts";
 import { formatPostDate } from "../content/metadata";
 import { articleComponents } from "./article-content";
-import { HmacExampleProvider } from "./hmac-example";
 
 export function PostPage({ slug }: { slug: string }) {
   const post = findPost(slug);
-  const module =
-    articles[`../../posts/${slug}/index.md`] ?? articles[`../../posts/${slug}/index.mdx`];
-  const Content = module?.default;
+  const Content = articleEntries[slug];
   if (!post || !Content) throw notFound();
   return (
     <article className="article">
@@ -33,13 +30,7 @@ export function PostPage({ slug }: { slug: string }) {
         <p>{post.description}</p>
       </header>
       <div className="typeset typeset-article">
-        {module?.frontmatter?.interactive === "hmac" ? (
-          <HmacExampleProvider key={slug}>
-            <Content components={articleComponents} />
-          </HmacExampleProvider>
-        ) : (
-          <Content components={articleComponents} />
-        )}
+        <Content components={articleComponents} />
       </div>
     </article>
   );

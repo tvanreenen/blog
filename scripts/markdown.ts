@@ -5,7 +5,6 @@ import remarkFrontmatter from "remark-frontmatter";
 import remarkMdxFrontmatter from "remark-mdx-frontmatter";
 import remarkGfm from "remark-gfm";
 import { articleHeadings } from "./headings.ts";
-import { interactiveFigures } from "./interactive-figures.ts";
 
 const highlighting: RehypeShikiOptions = {
   themes: { light: "github-light-high-contrast", dark: "github-dark-high-contrast" },
@@ -29,7 +28,6 @@ export const markdownOptions: Options = {
     [remarkMdxFrontmatter, { name: "frontmatter" }],
     remarkGfm,
     articleHeadings,
-    interactiveFigures,
   ],
   rehypePlugins: [[rehypeShiki, highlighting]],
 };

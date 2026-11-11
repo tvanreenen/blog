@@ -1,9 +1,21 @@
 ---
 title: Making Sense of One-Time Passwords
 date: 2026-11-10
-interactive: hmac
+aliases: [totp-in-swift]
 description: How your authenticator and a website independently calculate the same six-digit code.
 ---
+
+export { HmacExampleProvider as default } from "./example";
+import {
+  SecretFigure,
+  SetupFigure,
+  ClockFigure,
+  HmacFigure,
+  SelectionFigure,
+  MaskFigure,
+  NumberFigure,
+  RemainderFigure,
+} from "./components/figures";
 
 By now, I think most of us understand why multi-factor authentication matters: a stolen password shouldn't be enough to open an account. We've used text messages, authenticator codes, push approvals, and security keys to add another kind of proof.
 
@@ -25,13 +37,13 @@ For this example, we start with 20 random bytes, or 160 bits. A bit is a `0` or 
 
 Hexadecimal makes the individual bytes easy to inspect. Authenticator setup conventionally represents the secret as **Base32** text, using an alphabet of `A` through `Z` and `2` through `7`. Those 32 symbols represent five bits each, so our 160 bits become 32 characters. The secret hasn't changed; only its representation has. Encoding it doesn't encrypt it.
 
-![Encode the 20 original secret bytes as the 32-character Base32 string GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ. The representation changes, but the secret stays the same.](totp-base32.svg#interactive-hmac-base32)
+<SecretFigure />
 
 You can enter that text directly into an authenticator. To save you typing, a service can package it into an [`otpauth` setup URI](https://github.com/google/google-authenticator/wiki/Key-Uri-Format), alongside an account label and the calculation settings. A setup link passes that URI to an authenticator app. A QR code carries the same URI so the app can read it through a camera. The QR code is another way to transfer the secret and its settings; it doesn't generate the six-digit codes.
 
 Here's the setup URI for our example, with its parts on separate lines. The secret and QR code follow the bytes above:
 
-![An otpauth URI carries the Base32 secret, a Blog demo account label, and settings for SHA-1, six digits, and a 30-second step. The QR code encodes that same URI.](totp-setup.svg#interactive-hmac-setup)
+<SetupFigure />
 
 ## Following the math to six digits
 
@@ -43,7 +55,7 @@ We need to turn those two inputs, a secret and a time, into one short answer. Th
 
 Unix time, `t`, counts seconds from the start of 1970 in UTC. Each break below starts a new 30-second window. The current time sits between two of those boundaries. Divide `t` by 30 and round down to find the window number:
 
-![The first time window contains seconds 0 through 29; the next contains 30 through 59. Time 59 is in window 1 when counting from zero: 59 divided by 30 is 1.966..., rounded down to 1.](totp-clock.svg#interactive-hmac-clock)
+<ClockFigure />
 
 Every instant within a given 30-second window has the same counter. The clocks don't need to agree on the exact second, provided both fall within that same window. We'll turn that number into bytes in the next step.
 
@@ -53,7 +65,7 @@ HMAC is a keyed hash function: it produces a fixed-length result from a **secret
 
 Both inputs enter as bytes. We decode the Base32 secret from setup to recover the original key bytes. The message is the counter from `floor(t ÷ 30)`, encoded as an eight-byte integer, most significant byte first. Using the same width and byte order ensures both sides feed HMAC the same message. The key stays fixed; the message changes as the clock advances.
 
-![Two input containers show the before and after: decode the Base32 secret to recover 20 key bytes; encode decimal counter 1 as eight bytes, 00 00 00 00 00 00 00 01. These distinct inputs enter HMAC-SHA1 and produce 20 bytes.](totp-hmac.svg#interactive-hmac)
+<HmacFigure />
 
 The counter isn't secret. Anyone can work out what time window we're in, but calculating the matching result also requires the key. We now have a newly calculated 20-byte result tied to both inputs, written in hexadecimal. Its length comes from SHA-1, independently of the secret's length. The remaining operations make it short enough to type.
 
@@ -65,7 +77,7 @@ The authenticator and server must choose the same four bytes. HOTP lets the resu
 
 The blue highlight shows the four bytes we keep. The numbered guide underneath traces how the last byte picks its starting position:
 
-![The last byte ab is binary 1010 1011. Keep the rightmost four bits, 1011. Their place values give 8 + 0 + 2 + 1 = 11. Start at byte position 11 and keep positions 11 through 14: c1 39 7e ea.](totp-select.svg#interactive-hmac-select)
+<SelectionFigure />
 
 When the clock enters a new time window, or we generate a new secret, the HMAC result changes. Its last four bits can change too, moving the highlighted slice. Four bits give 16 possible starts, from 0 to 15, all leaving room for four bytes inside the result.
 
@@ -75,11 +87,11 @@ This is [dynamic truncation](https://www.rfc-editor.org/rfc/rfc4226.html#section
 
 The four selected bytes give us 32 bits. In a signed 32-bit integer, the leftmost bit determines whether the number is negative. HOTP clears that bit so implementations agree on a non-negative value for the arithmetic that follows. That leaves 31 usable bits. If the first bit is already zero, it stays zero; every other bit keeps its value:
 
-![The four selected bytes are shown before and after. Only the first bit changes from one to zero: c1 becomes 41, while 39, 7e, and ea stay the same.](totp-mask.svg#interactive-hmac-mask)
+<MaskFigure />
 
 To read those four bytes as one number, each position is worth 256 times the position to its right. It's the same place-value idea as hundreds, tens, and units in decimal, using 256 because a byte has 256 possible values. The tiles show each hex byte as a decimal value, its place value, and its contribution to the total:
 
-![Hex bytes 41 39 7e ea become decimal values 65, 57, 126, and 234. Multiply by 256 cubed, 256 squared, 256, and 1, then add the four contributions to get 1094287082.](totp-number.svg#interactive-hmac-number)
+<NumberFigure />
 
 Both the bit mask and the byte order come from [HOTP's truncation procedure](https://www.rfc-editor.org/rfc/rfc4226.html#section-5.3).
 
@@ -87,7 +99,7 @@ Both the bit mask and the byte order come from [HOTP's truncation procedure](htt
 
 Modulo keeps the remainder after division. Dividing by one million separates the whole millions from a remainder between 0 and 999999. In decimal, that means keeping the last six digits:
 
-![Split 1094287082 into 1094 whole millions and remainder 287082. Discard the whole millions and keep the six highlighted digits as the code.](totp-remainder.svg#interactive-hmac-remainder)
+<RemainderFigure />
 
 If the remainder has fewer than six digits, pad it with leading zeros: `42`, for example, becomes `000042`.
 

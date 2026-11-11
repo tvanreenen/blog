@@ -1,10 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-  decodeBase32,
-  encodeBase32,
-  EXAMPLE_SECRET,
-  generateTotpSecret,
-} from "../../src/lib/totp-secret";
+import { decodeBase32, encodeBase32, EXAMPLE_SECRET, generateTotpSecret } from "./secret";
 
 const encoder = new TextEncoder();
 const decoder = new TextDecoder();

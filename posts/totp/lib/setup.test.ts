@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { totpSetupUri } from "../../src/lib/totp-setup";
-import { decodeBase32, EXAMPLE_SECRET } from "../../src/lib/totp-secret";
+import { totpSetupUri } from "./setup";
+import { decodeBase32, EXAMPLE_SECRET } from "./secret";
 
 describe("authenticator provisioning", () => {
   it("carries the canonical secret, matching issuer label, and the walkthrough's exact settings", () => {

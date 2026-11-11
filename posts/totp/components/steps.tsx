@@ -1,7 +1,9 @@
+import { cn } from "@/lib/utils";
+import styles from "../styles.module.css";
 import { ArrowDown } from "lucide-react";
-import { useHmacExample } from "./hmac-example";
-import { HmacBytes } from "./hmac-bytes";
-import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "./ui/card";
+import { useHmacExample } from "../example";
+import { HmacBytes } from "./bytes";
+import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
 import { MAX_COUNTER, toHex } from "../lib/hmac";
 
 const spaced = (bytes: number[]) => bytes.map((byte) => toHex([byte])).join(" ");
@@ -9,7 +11,7 @@ const spaced = (bytes: number[]) => bytes.map((byte) => toHex([byte])).join(" ")
 function Unavailable() {
   const { pending, error } = useHmacExample();
   return (
-    <p className="hmac-caption">
+    <p className={styles["hmac-caption"]}>
       {pending
         ? "Calculating this step…"
         : error
@@ -32,32 +34,34 @@ export function HmacClock() {
     <>
       {/* oxlint-disable jsx-a11y/prefer-tag-over-role -- This named group describes a time-window visualization, not form fields. */}
       <div
-        className="hmac-clock-viewport"
+        className={styles["hmac-clock-viewport"]}
+        data-part="clock-viewport"
         role="group"
         aria-label={`Time windows slide beneath a fixed now marker. Current window ${counter}, from ${counter * 30n} up to ${counter * 30n + 30n} seconds, excluding the upper boundary.`}
       >
-        <div className="hmac-window-strip" aria-hidden="true">
+        <div className={styles["hmac-window-strip"]} aria-hidden="true">
           {windows.map((value) => (
             <div
               key={String(value)}
-              className="hmac-window"
+              className={styles["hmac-window"]}
+              data-part="window"
               data-window={String(value)}
               data-current={value === counter}
               style={{
                 transform: `translateX(${(Number(value - counter) - elapsed / 30) * 100}%)`,
               }}
             >
-              <div className="hmac-window-card">
+              <div className={styles["hmac-window-card"]}>
                 <span>{value === counter ? "Active" : "Window"}</span>
                 <strong>{String(value)}</strong>
               </div>
-              <span className="hmac-boundary" data-boundary={String(value * 30n)}>
+              <span className={styles["hmac-boundary"]} data-boundary={String(value * 30n)}>
                 <code>{String(value * 30n)}</code>
               </span>
             </div>
           ))}
         </div>
-        <div className="hmac-now">
+        <div className={styles["hmac-now"]} data-part="now">
           <output aria-label="Unix time" aria-live="off">
             {String(time)}
           </output>
@@ -65,10 +69,10 @@ export function HmacClock() {
         </div>
       </div>
       {/* oxlint-enable jsx-a11y/prefer-tag-over-role */}
-      <p className="hmac-caption hmac-clock-caption">
+      <p className={cn(styles["hmac-caption"], styles["hmac-clock-caption"])}>
         Next window in {30 - elapsed} {30 - elapsed === 1 ? "second" : "seconds"}.
       </p>
-      <div className="hmac-equation">
+      <div className={styles["hmac-equation"]}>
         <code>floor(t ÷ 30)</code>
         <span>=</span>
         <output aria-label="Time window counter" aria-live="off">
@@ -90,7 +94,9 @@ export function HmacSelect() {
   const contributions = weights.map((weight, index) => (lower[index] === "1" ? weight : 0));
   return (
     <>
-      <figcaption className="hmac-output-label">20-byte HMAC result · positions 0–19</figcaption>
+      <figcaption className={styles["hmac-output-label"]}>
+        20-byte HMAC result · positions 0–19
+      </figcaption>
       <HmacBytes
         bytes={result.bytes}
         offset={result.offset}
@@ -100,35 +106,36 @@ export function HmacSelect() {
       <output className="sr-only" aria-label="Selected bytes" aria-live="off">
         {spaced(result.selected)}
       </output>
-      <Card size="sm" className="hmac-selector-detail">
+      <Card size="sm">
         <CardHeader>
           <CardTitle>Find the starting position</CardTitle>
         </CardHeader>
         <CardContent>
           {/* oxlint-disable-next-line jsx-a11y/no-redundant-roles -- Safari needs explicit list semantics when list markers are hidden. */}
-          <ol className="hmac-selection-steps" role="list">
+          <ol className={styles["hmac-selection-steps"]} role="list">
             <li>
-              <div className="hmac-selection-step">
-                <span className="hmac-step-title">Read the last byte · position 19</span>
+              <div className={styles["hmac-selection-step"]}>
+                <span className={styles["hmac-step-title"]}>Read the last byte · position 19</span>
                 <output className="sr-only" aria-label="Selector byte" aria-live="off">
                   {hex}
                 </output>
-                <p className="hmac-caption">
+                <p className={styles["hmac-caption"]}>
                   Each hex digit represents four bits. Keep the four bits on the right.
                 </p>
-                <div className="hmac-nibbles">
-                  <div className="hmac-nibble">
+                <div className={styles["hmac-nibbles"]}>
+                  <div className={styles["hmac-nibble"]}>
                     <output
-                      className="hmac-nibble-hex"
+                      className={styles["hmac-nibble-hex"]}
+                      data-part="nibble-hex"
                       aria-label="Upper hex digit"
                       aria-live="off"
                     >
                       Hex <strong>{hex[0]}</strong>
                     </output>
-                    <ArrowDown className="hmac-nibble-arrow" aria-hidden="true" />
-                    <span className="hmac-output-label">Left 4 · ignore</span>
+                    <ArrowDown className={styles["hmac-nibble-arrow"]} aria-hidden="true" />
+                    <span className={styles["hmac-output-label"]}>Left 4 · ignore</span>
                     <output
-                      className="hmac-nibble-bits"
+                      className={styles["hmac-nibble-bits"]}
                       aria-label="Upper four bits"
                       aria-live="off"
                     >
@@ -140,18 +147,19 @@ export function HmacSelect() {
                         ))}
                     </output>
                   </div>
-                  <div className="hmac-nibble" data-kept="true">
+                  <div className={styles["hmac-nibble"]} data-kept="true">
                     <output
-                      className="hmac-nibble-hex"
+                      className={styles["hmac-nibble-hex"]}
+                      data-part="nibble-hex"
                       aria-label="Lower hex digit"
                       aria-live="off"
                     >
                       Hex <strong>{hex[1]}</strong>
                     </output>
-                    <ArrowDown className="hmac-nibble-arrow" aria-hidden="true" />
-                    <span className="hmac-output-label">Right 4 · keep</span>
+                    <ArrowDown className={styles["hmac-nibble-arrow"]} aria-hidden="true" />
+                    <span className={styles["hmac-output-label"]}>Right 4 · keep</span>
                     <output
-                      className="hmac-nibble-bits"
+                      className={styles["hmac-nibble-bits"]}
                       aria-label="Lower four bits"
                       aria-live="off"
                     >
@@ -161,17 +169,17 @@ export function HmacSelect() {
                         </span>
                       ))}
                     </output>
-                    <div className="hmac-bit-weights" aria-hidden="true">
+                    <div className={styles["hmac-bit-weights"]} aria-hidden="true">
                       {weights.map((weight) => (
                         <span key={weight}>×{weight}</span>
                       ))}
                     </div>
                   </div>
                 </div>
-                <p className="hmac-caption">
+                <p className={styles["hmac-caption"]}>
                   The four places are worth 8, 4, 2, and 1. Add a weight when its bit is 1.
                 </p>
-                <div className="hmac-equation hmac-offset-sum">
+                <div className={cn(styles["hmac-equation"], styles["hmac-offset-sum"])}>
                   <code aria-label="Offset calculation">{contributions.join(" + ")} =</code>
                   <output aria-label="Selection offset" aria-live="off">
                     {result.offset}
@@ -180,9 +188,11 @@ export function HmacSelect() {
               </div>
             </li>
             <li>
-              <div className="hmac-selection-step">
-                <span className="hmac-step-title">Start at byte position {result.offset}</span>
-                <p className="hmac-caption">
+              <div className={styles["hmac-selection-step"]}>
+                <span className={styles["hmac-step-title"]}>
+                  Start at byte position {result.offset}
+                </span>
+                <p className={styles["hmac-caption"]}>
                   Count from zero. Keep that byte and the next three: positions {result.offset}–
                   {result.offset + 3}. Those are the four blue bytes highlighted above.
                 </p>
@@ -197,11 +207,11 @@ export function HmacSelect() {
 
 function MaskByteBits({ bytes, offset }: { bytes: readonly number[]; offset: number }) {
   return (
-    <div className="hmac-selected-binary" aria-hidden="true">
+    <div className={styles["hmac-selected-binary"]} data-part="selected-binary" aria-hidden="true">
       {bytes.map((byte, byteIndex) => (
         <div
           key={byteIndex}
-          className="hmac-byte"
+          className={styles["hmac-byte"]}
           data-selected="true"
           data-start={byteIndex === 0}
         >
@@ -229,22 +239,22 @@ export function HmacMask() {
   if (!result) return <Unavailable />;
   const changed = result.selected[0] !== result.masked[0];
   return (
-    <Card size="sm" className="hmac-math-card">
+    <Card size="sm">
       <CardHeader>
         <CardTitle>Clear the first bit</CardTitle>
         <CardDescription size="sm">32 bits → 31 usable bits</CardDescription>
       </CardHeader>
-      <CardContent className="hmac-math-content">
-        <span className="hmac-output-label">Before · the four selected bytes</span>
+      <CardContent className={styles["hmac-math-content"]}>
+        <span className={styles["hmac-output-label"]}>Before · the four selected bytes</span>
         <MaskByteBits bytes={result.selected} offset={result.offset} />
         <output className="sr-only" aria-label="Selected 32 bits" aria-live="off">
           {result.selected.map((byte) => byte.toString(2).padStart(8, "0")).join(" ")}
         </output>
-        <div className="hmac-flow-label">
+        <div className={styles["hmac-flow-label"]}>
           <ArrowDown aria-hidden="true" />
           <span>Set this first bit to 0</span>
         </div>
-        <span className="hmac-output-label">After · every other bit keeps its value</span>
+        <span className={styles["hmac-output-label"]}>After · every other bit keeps its value</span>
         <MaskByteBits bytes={result.masked} offset={result.offset} />
         <output className="sr-only" aria-label="Masked bytes" aria-live="off">
           {spaced(result.masked)}
@@ -252,7 +262,7 @@ export function HmacMask() {
         <output className="sr-only" aria-label="Masked bits" aria-live="off">
           {result.masked.map((byte) => byte.toString(2).padStart(8, "0")).join(" ")}
         </output>
-        <p className="hmac-caption">
+        <p className={styles["hmac-caption"]}>
           {changed
             ? "The marked bit changes from 1 to 0. The other 31 bits stay the same."
             : "The marked bit is already 0, so all four bytes stay the same."}
@@ -266,26 +276,31 @@ export function HmacNumber() {
   const { result } = useHmacExample();
   if (!result) return <Unavailable />;
   return (
-    <Card size="sm" className="hmac-math-card">
+    <Card size="sm">
       <CardHeader>
         <CardTitle>Read the four bytes as one number</CardTitle>
         <CardDescription size="sm">Multiply each byte by its place value, then add</CardDescription>
       </CardHeader>
-      <CardContent className="hmac-math-content">
-        <dl className="hmac-byte-values">
+      <CardContent className={styles["hmac-math-content"]}>
+        <dl className={styles["hmac-byte-values"]}>
           {result.masked.map((byte, index) => (
-            <div key={index} className="hmac-byte" data-selected="true" data-start={index === 0}>
+            <div
+              key={index}
+              className={styles["hmac-byte"]}
+              data-selected="true"
+              data-start={index === 0}
+            >
               <dt aria-label={`Byte ${result.offset + index}, hexadecimal ${toHex([byte])}`}>
                 <small>{result.offset + index}</small>
                 <span>{toHex([byte])}</span>
               </dt>
               <dd>
                 {index > 0 && (
-                  <span className="hmac-addition-sign" aria-hidden="true">
+                  <span className={styles["hmac-addition-sign"]} aria-hidden="true">
                     +
                   </span>
                 )}
-                <span className="hmac-byte-decimal">
+                <span className={styles["hmac-byte-decimal"]}>
                   <ArrowDown aria-hidden="true" />
                   <span>
                     Decimal <strong>{byte}</strong>
@@ -305,9 +320,13 @@ export function HmacNumber() {
             </div>
           ))}
         </dl>
-        <div className="hmac-sum-total">
+        <div className={styles["hmac-sum-total"]}>
           <span aria-hidden="true">=</span>
-          <output className="hmac-number-result" aria-label="Masked number" aria-live="off">
+          <output
+            className={styles["hmac-number-result"]}
+            aria-label="Masked number"
+            aria-live="off"
+          >
             {String(result.number)}
           </output>
         </div>
@@ -322,24 +341,29 @@ export function HmacRemainder() {
   const remainder = result.number % 1_000_000;
   const padding = 6 - String(remainder).length;
   return (
-    <Card size="sm" className="hmac-math-card">
+    <Card size="sm">
       <CardHeader>
         <CardTitle>Keep six decimal digits</CardTitle>
         <CardDescription size="sm">
           Split the number into whole millions and a remainder
         </CardDescription>
       </CardHeader>
-      <CardContent className="hmac-math-content">
-        <div className="hmac-number-cut">
-          <div className="hmac-discarded-millions">
+      <CardContent className={styles["hmac-math-content"]}>
+        <div className={styles["hmac-number-cut"]}>
+          <div className={styles["hmac-discarded-millions"]}>
             <output aria-label="Quotient" aria-live="off">
               {String(result.quotient)}
             </output>
             <span>Whole millions</span>
             <small>Discard</small>
           </div>
-          <div className="hmac-kept-digits">
-            <output className="hmac-final-digits" aria-label="Final six-digit code" aria-live="off">
+          <div>
+            <output
+              className={styles["hmac-final-digits"]}
+              data-part="final-digits"
+              aria-label="Final six-digit code"
+              aria-live="off"
+            >
               {result.code.split("").map((digit, index) => (
                 <span key={index} data-padding={index < padding}>
                   {digit}
@@ -350,13 +374,13 @@ export function HmacRemainder() {
             <small>Keep</small>
           </div>
         </div>
-        <div className="hmac-equation hmac-modulo-equation">
+        <div className={cn(styles["hmac-equation"], styles["hmac-modulo-equation"])}>
           <code>{String(result.number)} mod 1000000 =</code>
           <output aria-label="Remainder" aria-live="off">
             {String(remainder)}
           </output>
         </div>
-        <p className="hmac-caption">
+        <p className={styles["hmac-caption"]}>
           {padding
             ? `The remainder has ${6 - padding} digits. Add ${padding} leading ${padding === 1 ? "zero" : "zeros"} to fill all six positions.`
             : "The remainder fills all six positions. These are the digits you enter."}

@@ -1,7 +1,8 @@
+import styles from "../styles.module.css";
 import { useEffect, useState } from "react";
-import { useHmacExample } from "./hmac-example";
-import { DEMO_ACCOUNT, DEMO_ISSUER, DEMO_LABEL, totpQr, totpSetupUri } from "../lib/totp-setup";
-import { encodeBase32 } from "../lib/totp-secret";
+import { useHmacExample } from "../example";
+import { DEMO_ACCOUNT, DEMO_ISSUER, DEMO_LABEL, totpQr, totpSetupUri } from "../lib/setup";
+import { encodeBase32 } from "../lib/secret";
 
 type Qr = { uri: string; size?: number; path?: string; failed?: boolean };
 
@@ -23,7 +24,7 @@ function SetupQr({ uri }: { uri: string }) {
   }, [uri]);
   const current = qr?.uri === uri ? qr : undefined;
   return (
-    <div className="hmac-qr">
+    <div className={styles["hmac-qr"]} data-part="qr">
       {current?.path ? (
         /* oxlint-disable jsx-a11y/prefer-tag-over-role -- The generated QR remains inline SVG with an accessible image role. */
         <svg
@@ -37,7 +38,7 @@ function SetupQr({ uri }: { uri: string }) {
         </svg>
       ) : (
         /* oxlint-enable jsx-a11y/prefer-tag-over-role */
-        <output className="hmac-caption">
+        <output className={styles["hmac-caption"]}>
           {current?.failed
             ? "QR unavailable. Use the setup link or enter the secret manually."
             : "Generating QR code…"}
@@ -54,12 +55,12 @@ export function HmacSetup() {
   const uri = totpSetupUri(secretBytes);
   return (
     <>
-      <figcaption className="hmac-output-label">
+      <figcaption className={styles["hmac-output-label"]}>
         One setup URI, packaged as text or a QR code
       </figcaption>
-      <div className="hmac-setup-layout">
-        <div className="hmac-uri-detail">
-          <output className="hmac-uri" aria-label="Setup URI" aria-live="off">
+      <div className={styles["hmac-setup-layout"]}>
+        <div className={styles["hmac-uri-detail"]}>
+          <output className={styles["hmac-uri"]} aria-label="Setup URI" aria-live="off">
             <span>otpauth://totp/</span>
             <span>{DEMO_LABEL}</span>
             <span>
@@ -70,7 +71,7 @@ export function HmacSetup() {
             <span>&amp;digits=6</span>
             <span>&amp;period=30</span>
           </output>
-          <dl className="hmac-uri-key">
+          <dl className={styles["hmac-uri-key"]}>
             <div>
               <dt>Label</dt>
               <dd>
@@ -89,7 +90,7 @@ export function HmacSetup() {
         </div>
         <SetupQr uri={uri} />
       </div>
-      <p className="hmac-caption">
+      <p className={styles["hmac-caption"]}>
         Scan this with an authenticator to follow along: its code should match the live result
         below. Generating a new secret means scanning its new QR code.
       </p>

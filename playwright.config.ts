@@ -1,7 +1,14 @@
 import { defineConfig, devices } from "@playwright/test";
+import { readPosts } from "./scripts/posts";
+
+const posts = await readPosts();
 
 export default defineConfig({
-  testDir: "./tests/browser",
+  testDir: ".",
+  testMatch: [
+    "tests/browser/**/*.spec.ts",
+    ...posts.map((post) => `posts/${post.slug}/**/*.browser.spec.ts`),
+  ],
   fullyParallel: true,
   workers: 2,
   forbidOnly: !!process.env.CI,

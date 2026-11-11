@@ -1,8 +1,8 @@
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import type { ReactNode } from "react";
-import { calculateHmac, parseCounter } from "../lib/hmac";
-import type { HmacResult } from "../lib/hmac";
-import { decodeBase32, EXAMPLE_SECRET, generateTotpSecret } from "../lib/totp-secret";
+import { calculateHmac, parseCounter } from "./lib/hmac";
+import type { HmacResult } from "./lib/hmac";
+import { decodeBase32, EXAMPLE_SECRET, generateTotpSecret } from "./lib/secret";
 
 type Calculation = { secret: string; counter: string; result?: HmacResult; error?: string };
 type HmacExample = {

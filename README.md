@@ -27,19 +27,19 @@ Install the test browser when needed with `npx playwright install chromium`. The
 | Path                 | Responsibility                                                       |
 | -------------------- | -------------------------------------------------------------------- |
 | `src/routes/`        | Page routes, metadata, and the HTML document                         |
-| `src/components/`    | Site layout, article rendering, and interactive figures              |
+| `src/components/`    | Shared site layout and article rendering                             |
 | `src/components/ui/` | Shared shadcn/Base UI components                                     |
-| `src/lib/`           | TOTP calculations, setup encoding, and shared utilities              |
+| `src/lib/`           | Shared utilities used across the site                                |
 | `src/content/`       | Metadata validation and generated article imports/manifest           |
 | `src/site.json`      | Site identity, canonical origin, social links, and sharing image     |
-| `posts/<slug>/`      | Article source and colocated images/diagrams                         |
+| `posts/<slug>/`      | Article text, assets, components, styles, calculations, and tests    |
 | `public/`            | Maintained favicons and site sharing image; copied unchanged by Vite |
 | `scripts/`           | Content preparation, Markdown compilation, and static finalization   |
 | `tests/`             | Unit tests and Playwright browser tests                              |
 | `licenses/`          | Font and shadcn notices copied into the artifact                     |
 | `design/concepts/`   | Hero image explorations and generation prompts; not deployed         |
 
-`dist/`, `.tanstack/`, generated content files, `public/posts/`, and `public/licenses/` are ignored build outputs. Edit original article assets in `posts/`, never their generated public copies. Browser bundles contain only the articles selected for that build. Article bodies share a route chunk and stay separate from the homepage.
+`dist/`, `.tanstack/`, generated content files, `public/posts/`, and `public/licenses/` are ignored build outputs. Edit original article assets in `posts/`, never their generated public copies. Browser bundles contain only the articles selected for that build. Each article has its own lazy entry and loads independently of other article bodies. The route preloads the selected entry before rendering; complete HTML is still prerendered.
 
 ## Writing and drafts
 
@@ -52,11 +52,11 @@ date: 2026-11-11
 draft: true
 ```
 
-`draft` is optional and must be a boolean. Drafts are available in local development but excluded from **every build**, including public branch previews. Their metadata, HTML pages, JavaScript article bodies, and colocated assets are excluded. Draft URLs return 404 in the built site. Remove `draft: true` or set it to `false` to publish on the next build. Avoid linking published articles to draft URLs; Key currently links to the xkcdpass project repository while its article is in draft.
+`draft` is optional and must be a boolean. Drafts are available in local development but excluded from **every build**, including public branch previews. Their metadata, HTML pages, article code and styles, and colocated assets are excluded. Draft URLs return 404 in the built site. Remove `draft: true` or set it to `false` to publish on the next build. Avoid linking published articles to draft URLs; Key currently links to the xkcdpass project repository while its article is in draft.
 
-Plain Markdown keeps literal braces and comparison operators as prose. MDX supports JSX and component imports through the `@/` alias. The page layout owns h1; article headings begin at h2. GFM tables are keyboard-scrollable, and unknown or unlabelled code fences retain the same copy/wrap controls as highlighted code.
+Plain Markdown keeps literal braces and comparison operators as prose. Use MDX for interactive articles, importing local components with relative paths and shared UI through the `@/` alias. Keep article-specific state, code, CSS Modules, and tests inside that article’s directory; extract shared pieces when another article needs them. The page layout owns h1; article headings begin at h2. GFM tables are keyboard-scrollable, and unknown or unlabelled code fences retain the same copy/wrap controls as highlighted code.
 
-The official shadcn typeset stylesheet is in `src/typeset.css`. Article presets and theme tokens live in `src/styles.css`. Tailwind scans `src/` and article sources explicitly, leaving documentation, tests, and design explorations out of CSS generation. Shared Card accents and description sizes are component props; diagram CSS owns data layouts. See [interactive article figures](docs/interactive-figures.md) for the live TOTP walkthrough and static fallbacks.
+The official shadcn typeset stylesheet is in `src/typeset.css`. Article presets and theme tokens live in `src/styles.css`. Tailwind scans `src/` and article sources explicitly, leaving documentation, tests, and design explorations out of CSS generation. Shared Card accents and description sizes are component props. Article diagrams own their layouts and scoped styles. See [interactive article authoring](docs/interactive-figures.md) for the local TOTP structure, MDX layout, scoped styles, and static fallbacks.
 
 ## Cloudflare Pages
 
@@ -74,7 +74,7 @@ Use the current Pages build image and remove any old `NODE_VERSION` override so 
 
 The [Pages build variables](https://developers.cloudflare.com/pages/configuration/build-configuration/#environment-variables) select indexing behavior: `CF_PAGES=1` with `CF_PAGES_BRANCH=main` produces an indexable site. Other branches and missing branch values remain unindexed even if a production override is inherited. Local builds default to preview; development is always unindexed.
 
-Production generates a sitemap containing the homepage and published articles, and `robots.txt` advertises it. Preview HTML, robots rules, and headers prevent indexing, and previews have no sitemap. The 404 page stays unindexed. Canonical, Open Graph, and Twitter card metadata use the production origin from `src/site.json`. Existing published slugs are preserved, including `key-secret-mananger`.
+Production generates a sitemap containing the homepage and published articles, and `robots.txt` advertises it. Preview HTML, robots rules, and headers prevent indexing, and previews have no sitemap. The 404 page stays unindexed. Canonical, Open Graph, and Twitter card metadata use the production origin from `src/site.json`. Use an optional `aliases: [previous-slug]` frontmatter list when changing a slug. Aliases generate permanent Pages redirects and are also resolved by the app router. Alias and canonical URL collisions fail the build, including collisions with drafts. TOTP now lives at `/posts/totp/`; `/posts/totp-in-swift/` redirects there. The existing `key-secret-mananger` spelling remains unchanged.
 
 To verify the production artifact locally:
 
@@ -91,6 +91,6 @@ The dashboard settings must be updated for the replacement stack. After the firs
 
 Oxlint enables React and JSX accessibility correctness checks. Warnings and unused suppression comments fail the command. Narrow, documented exceptions preserve the browser-only TOTP initialization after hydration, labelled data/field groups, accessible inline SVG, keyboard scrolling, Safari list semantics, and input-addon focus forwarding.
 
-Browser tests cover all published articles and images, accessibility, theme persistence, hydration, code controls, static reading without JavaScript, indexing and sharing metadata, sitemap contents, draft exclusion, and the linked live calculations and failure states. The theme uses a DOM external store, and the prerendered footer year is serialized as route data to keep hydration consistent.
+Unit tests in `posts/**/*.test.ts` and browser tests in `posts/**/*.browser.spec.ts` stay beside the article they verify. Typechecking and linting include article-local code, including drafts; prose and authored graphics are excluded from code formatting. Shared tests remain in `tests/`. Browser tests cover all published articles and images, accessibility, theme persistence, hydration, code controls, static reading without JavaScript, indexing and sharing metadata, sitemap contents, draft exclusion, and the linked live calculations and failure states. The theme uses a DOM external store, and the prerendered footer year is serialized as route data to keep hydration consistent.
 
 The dependency audit has six low/moderate advisories in the development-only shadcn CLI chain. Recheck upstream rather than applying npm’s proposed breaking downgrade to shadcn 1.0.0. Build output includes font, shadcn, and bundled dependency notices.

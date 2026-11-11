@@ -49,7 +49,7 @@ This split is the primary security boundary. Keychain access is gated by signing
 
 The vault is straightforward: one randomly generated 256-bit symmetric key, stored in Keychain, encrypts all secrets individually as AES-256-GCM JSON files. Standard primitives, no custom cryptography. If you ever need to decrypt outside `key`, the README walks through it — parse the JSON, base64-decode the nonce and ciphertext, split the auth tag, decrypt with any AES-GCM implementation. The vault key is the only thing that needs protecting, and it lives in Keychain behind your biometrics.
 
-Two side projects grew out of this: [xkcdpass](https://github.com/tvanreenen/xkcdpass) and [Making Sense of One-Time Passwords](/posts/totp-in-swift/).
+Two side projects grew out of this: [xkcdpass](https://github.com/tvanreenen/xkcdpass) and [Making Sense of One-Time Passwords](/posts/totp/).
 
 ## One Lesson Still In-Progress: The Multi-Device Security Model
 

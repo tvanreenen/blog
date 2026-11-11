@@ -7,20 +7,6 @@ import { markdownOptions } from "../../scripts/markdown";
 import { articleComponents } from "../../src/components/article-content";
 
 describe("article compilation", () => {
-  it("enhances a marked standalone figure and preserves its static fallback", async () => {
-    const source = "![Static HMAC example](totp-hmac.svg#interactive-hmac)";
-    const { default: Content } = await evaluate(source, {
-      ...markdownOptions,
-      ...runtime,
-      format: "md",
-    });
-    const html = renderToStaticMarkup(createElement(Content, { components: articleComponents }));
-    expect(html).toContain('<figure data-interactive="hmac"');
-    expect(html).toContain('src="totp-hmac.svg"');
-    expect(html).toContain('alt="Static HMAC example"');
-    expect(html).not.toContain("<input");
-    expect(html).not.toContain("<p><figure");
-  });
   it("gives unlabelled fences the same code controls", async () => {
     const { default: Content } = await evaluate("```\nx + y\n```", {
       ...markdownOptions,

@@ -1,12 +1,16 @@
 import { describe, expect, it } from "vitest";
-import { parsePostMetadata, formatPostDate } from "../../src/content/metadata";
+import { parsePostMetadata, formatPostDate, validatePostCatalog } from "../../src/content/metadata";
 import { readPosts } from "../../scripts/posts";
 
 describe("existing content contract", () => {
+  it("keeps the renamed TOTP article's previous slug as an alias", async () => {
+    const posts = await readPosts();
+    expect(posts.find((post) => post.slug === "totp")?.aliases).toEqual(["totp-in-swift"]);
+  });
   it("keeps post slugs, authored dates, and newest-first ordering", async () => {
     const posts = await readPosts();
     expect(posts.map((post) => post.slug)).toEqual([
-      "totp-in-swift",
+      "totp",
       "key-secret-mananger",
       "numpy-vector-store",
       "from-aerospace-to-frame",
@@ -53,4 +57,36 @@ describe("existing content contract", () => {
       ).toThrow("Invalid post metadata");
     },
   );
+});
+
+describe("article URL ownership", () => {
+  const metadata = { title: "Example", description: "Description", date: "2026-11-11" };
+  it.each(["old", ["bad/path"], [""], ["example"], ["old", "old"], [42]])(
+    "rejects invalid aliases %j",
+    (aliases) => {
+      expect(() => parsePostMetadata("example", { ...metadata, aliases })).toThrow(
+        "Invalid post metadata",
+      );
+    },
+  );
+  it("accepts independent canonical URLs and aliases", () => {
+    expect(() =>
+      validatePostCatalog([
+        parsePostMetadata("one", { ...metadata, aliases: ["old-one"] }),
+        parsePostMetadata("two", { ...metadata, aliases: ["old-two"] }),
+      ]),
+    ).not.toThrow();
+  });
+  it.each([
+    ["one", [], "one", []],
+    ["one", ["old"], "two", ["old"]],
+    ["one", ["two"], "two", []],
+  ] as const)("rejects colliding article paths", (first, firstAliases, second, secondAliases) => {
+    expect(() =>
+      validatePostCatalog([
+        parsePostMetadata(first, { ...metadata, aliases: [...firstAliases] }),
+        parsePostMetadata(second, { ...metadata, aliases: [...secondAliases], draft: true }),
+      ]),
+    ).toThrow("Duplicate article URL");
+  });
 });

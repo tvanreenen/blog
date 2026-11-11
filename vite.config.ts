@@ -37,6 +37,6 @@ export default defineConfig(async ({ command }) => {
       alias: { "@": fileURLToPath(new URL("./src", import.meta.url)) },
       dedupe: ["react", "react-dom"],
     },
-    build: { license: { fileName: "licenses/dependencies.md" } },
+    build: { manifest: true, license: { fileName: "licenses/dependencies.md" } },
   };
 });

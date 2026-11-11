@@ -14,7 +14,18 @@ export default defineConfig({
       name: "static-pages-preview",
       configurePreviewServer(server) {
         const directory = fileURLToPath(new URL("./dist/client", import.meta.url));
-        server.middlewares.use((_request, response, next) => {
+        server.middlewares.use((request, response, next) => {
+          const pathname = new URL(request.url ?? "/", "http://localhost").pathname;
+          const redirects = readFileSync(resolve(directory, "_redirects"), "utf8");
+          for (const line of redirects.split("\n")) {
+            const [from, to, status] = line.trim().split(/\s+/);
+            if (from === pathname && to && status) {
+              response.statusCode = Number(status);
+              response.setHeader("Location", to);
+              response.end();
+              return;
+            }
+          }
           const headers = readFileSync(resolve(directory, "_headers"), "utf8");
           for (const line of headers.split("\n")) {
             const match = /^  ([\w-]+): (.+)$/.exec(line);

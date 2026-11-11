@@ -1,12 +1,8 @@
-import { Children, isValidElement, useState, useContext } from "react";
+import { Children, isValidElement, useState } from "react";
 import type { ComponentProps, ReactNode } from "react";
 import type { MDXComponents } from "mdx/types";
 import { WrapText } from "lucide-react";
 import { Button } from "./ui/button";
-import { HmacExplorer, HmacBase32 } from "./hmac-explorer";
-import { HmacSetup } from "./hmac-setup";
-import { HmacExampleContext } from "./hmac-example";
-import { HmacClock, HmacSelect, HmacMask, HmacNumber, HmacRemainder } from "./hmac-steps";
 import {
   CodeBlock,
   CodeBlockActions,
@@ -72,46 +68,7 @@ function ArticleCodeBlock({
   );
 }
 
-const liveFigures = {
-  "hmac-base32": HmacBase32,
-  "hmac-setup": HmacSetup,
-  hmac: HmacExplorer,
-  "hmac-clock": HmacClock,
-  "hmac-select": HmacSelect,
-  "hmac-mask": HmacMask,
-  "hmac-number": HmacNumber,
-  "hmac-remainder": HmacRemainder,
-};
-
-function ArticleFigure({
-  "data-interactive": interactive,
-  children,
-  ...props
-}: ComponentProps<"figure"> & { "data-interactive"?: string }) {
-  const example = useContext(HmacExampleContext);
-  const View = interactive ? liveFigures[interactive as keyof typeof liveFigures] : undefined;
-  if (!View) return <figure {...props}>{children}</figure>;
-  return (
-    <figure
-      {...props}
-      data-interactive={interactive}
-      data-not-typeset=""
-      className="hmac-explorer"
-      aria-busy={example?.pending}
-    >
-      {example?.enabled ? <View /> : children}
-      {!example?.enabled && interactive === "hmac-base32" && (
-        <figcaption className="hmac-caption">
-          The static figures use the public RFC test secret 12345678901234567890 as ASCII bytes, at
-          59 seconds after the Unix epoch, adapted to six digits.
-        </figcaption>
-      )}
-    </figure>
-  );
-}
-
 export const articleComponents: MDXComponents = {
-  figure: ArticleFigure,
   pre: ArticleCodeBlock,
   // oxlint-disable jsx-a11y/no-noninteractive-tabindex, jsx-a11y/prefer-tag-over-role -- This labelled group needs keyboard focus to scroll wide tables, including in Safari.
   table: (props) => (
