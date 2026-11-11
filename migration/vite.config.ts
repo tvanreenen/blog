@@ -6,11 +6,15 @@ import { tanstackStart } from "@tanstack/react-start/plugin/vite";
 import mdx from "@mdx-js/rollup";
 import { readPosts } from "./scripts/posts.ts";
 import { markdownOptions } from "./scripts/markdown.ts";
+import { isProductionBuild } from "./scripts/deployment.ts";
 
-export default defineConfig(async () => {
+export default defineConfig(async ({ command }) => {
   const posts = await readPosts();
   const paths = ["/", ...posts.map((post) => `/posts/${post.slug}/`), "/404"];
   return {
+    define: {
+      "import.meta.env.SITE_PRODUCTION": command === "build" && isProductionBuild(process.env),
+    },
     plugins: [
       tailwindcss(),
       { ...mdx(markdownOptions), enforce: "pre" },

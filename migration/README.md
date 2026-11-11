@@ -1,10 +1,10 @@
-# Blog migration preview
+# Blog migration
 
-The TanStack Start version of the blog lives here while the root Eleventy site remains the production build. The root `.eleventyignore` excludes this directory. Cloudflare Pages settings and the root Makefile have not been changed.
+The TanStack Start version of the blog lives here while the root Eleventy site remains available. The root `.eleventyignore` excludes this directory. Cloudflare Pages settings have not been changed; `make pages-build` builds this version for the cutover.
 
 ## Run locally
 
-Use Node 22.12 or newer and npm. From this directory:
+Use the Node version pinned in the repository's `.node-version` (26.13.0) and its bundled npm. The package supports Node 22.12 or newer. From this directory:
 
 ```sh
 npm ci
@@ -18,7 +18,7 @@ npm run build
 npm run preview
 ```
 
-The static preview runs at http://127.0.0.1:4188. The generated artifact is `dist/client/`; `dist/server/` is used during prerendering. The static preview serves the generated 404 page for missing paths, including `/work/`.
+The static preview runs at http://127.0.0.1:4188. The generated artifact is `dist/client/`; `dist/server/` is used during prerendering and is not deployed. The static preview serves the generated 404 page for missing paths, including `/work/`.
 
 ## Content and presentation
 
@@ -48,14 +48,29 @@ npm run build
 npm run test:browser
 ```
 
-The checks cover formatting, linting, TypeScript, content metadata, and Markdown/MDX compilation. Playwright exercises the static artifact in desktop and mobile Chromium, including client navigation, all existing articles and images, axe accessibility checks, theme persistence, exact code copying, clipboard denial, wrapping, no-JavaScript reading, preview indexing, and 404 delivery. Install Playwright's Chromium browser if it is not already available: `npx playwright install chromium`.
+The checks cover formatting, linting, TypeScript, content metadata, deployment selection, and Markdown/MDX compilation. Playwright exercises the static artifact in desktop and mobile Chromium, including client navigation, all existing articles and images, axe accessibility checks, theme persistence, exact code copying, clipboard denial, wrapping, no-JavaScript reading, indexing policy, canonical and sharing metadata, sitemap contents, and 404 delivery. Install Playwright's Chromium browser if it is not already available: `npx playwright install chromium`.
 
 Oxlint enables React and JSX accessibility correctness rules alongside its default plugins. Warnings and unused suppression comments fail the lint command. Inline exceptions are limited to the browser-only TOTP initialization after hydration, labelled data and field groups, accessible inline SVG, keyboard-scrollable code and tables, Safari's explicit list roles, and input addons that forward pointer focus to a separately keyboard-accessible input. Each exception names its rule and explains the behavior it preserves. Browser tests also cover hydration when the browser reports a different year from the prerendered page.
 
 The dependency audit currently reports six low/moderate advisories in the development-only shadcn CLI dependency chain. The frontmatter plugin uses the patched 6.0.0 release. Recheck the CLI upstream rather than applying npm's proposed breaking downgrade to shadcn 1.0.0.
 
-## Before production cutover
+## Cloudflare Pages cutover
 
-This is an unindexed preview. HTML metadata, `robots.txt`, and `_headers` prevent indexing. There is deliberately no deploy command or new Cloudflare configuration.
+Set the existing Pages project's production branch to `main`, framework preset to None, root directory to the repository root, build command to `make pages-build`, and output directory to `migration/dist/client`. Use the current build image and remove any old `NODE_VERSION` override so Pages reads the root `.node-version`. If build watch paths are restricted, include `migration/**`, `posts/**`, `_data/**`, root icon/OG assets, `Makefile`, and `.node-version`, or restore the default of watching all files.
 
-Before changing Pages, review the design and authoring workflow, add a production indexing/sitemap configuration, review canonical and sharing metadata, verify the final hosting headers and 404 behavior, and run the build/browser checks against that production artifact. Existing URLs, including the published `key-secret-mananger` spelling, must remain reachable. Keep the Eleventy build available until the migration is accepted.
+The build command installs locked dependencies, including build tools even when `NODE_ENV=production`, runs formatting/lint/type/unit checks, and builds the static artifact. No deployment credentials, Pages Functions, Workers adapter, or runtime environment variables are required. TanStack Start runs only during the build to prerender the HTML. Browser interactions hydrate those files.
+
+`scripts/deployment.ts` reads the [Pages build variables](https://developers.cloudflare.com/pages/configuration/build-configuration/#environment-variables). When `CF_PAGES=1`, only `CF_PAGES_BRANCH=main` produces an indexable site. A missing branch or any other branch stays unindexed, even if `SITE_ENV=production` was inherited. Locally, builds default to preview; `SITE_ENV=production` opts into the production artifact. Development is always unindexed.
+
+Production HTML allows indexing, `robots.txt` advertises the generated sitemap, and `_headers` preserves the security/referrer headers without a blanket indexing prohibition. The sitemap contains the homepage and every article at its existing canonical URL, including the published `key-secret-mananger` spelling. The 404 page stays `noindex, nofollow` and is omitted from the sitemap. Canonical, Open Graph, and Twitter card metadata use the production identity in `../_data/site.json` in both build modes. Preview HTML, `robots.txt`, and `_headers` block indexing, and previews have no sitemap.
+
+To check the production artifact locally, from this directory:
+
+```sh
+SITE_ENV=production npm run build
+SITE_ENV=production npm run test:browser
+```
+
+Use the same environment for the build and its browser tests. To test Pages' automatic selection, substitute `CF_PAGES=1 CF_PAGES_BRANCH=main`; use another branch name to test a preview. Builds overwrite `dist/client/`, so run these modes sequentially. The local preview serves the generated headers and 404 page without a Start server or SPA fallback. Cloudflare's [static route matching and 404 behavior](https://developers.cloudflare.com/pages/configuration/serving-pages/) serve the same HTML layout.
+
+Merging prepares this code for the next Pages build; changing the dashboard settings switches the build from Eleventy to this app. Once deployed, smoke-test the custom domain, a direct article URL, `/work/` returning 404, `/robots.txt`, `/sitemap.xml`, and the live TOTP example over HTTPS. Actual Cloudflare build execution and edge headers still require that first hosted deployment. The existing `make build` target remains available for Eleventy.

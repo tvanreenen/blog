@@ -5,6 +5,11 @@ import { createHmac } from "node:crypto";
 import matter from "gray-matter";
 import jsQR from "jsqr";
 import { readPosts } from "../../scripts/posts";
+import { isProductionBuild } from "../../scripts/deployment";
+import site from "../../../_data/site.json" with { type: "json" };
+
+const production = isProductionBuild(process.env);
+const robots = production ? "index, follow" : "noindex, nofollow";
 
 test("homepage navigation, article accessibility, and responsive reading", async ({ page }) => {
   const errors: string[] = [];
@@ -95,7 +100,7 @@ test("copy retains code text and blank lines; wrap control changes overflow mode
   await expect(block.locator("pre")).toHaveAttribute("data-wrap");
 });
 
-test("static article remains complete without JavaScript; preview indexing and 404s are preserved", async ({
+test("static article remains complete without JavaScript; deployment indexing and 404s are preserved", async ({
   browser,
   request,
 }) => {
@@ -106,7 +111,7 @@ test("static article remains complete without JavaScript; preview indexing and 4
   await expect(
     page.getByText("That understanding was the whole point.", { exact: true }),
   ).toBeVisible();
-  await expect(page.locator('meta[name="robots"]')).toHaveAttribute("content", "noindex, nofollow");
+  await expect(page.locator('meta[name="robots"]')).toHaveAttribute("content", robots);
   await page.goto("http://127.0.0.1:4188/posts/totp-in-swift/");
   await expect(page.locator('figure[data-interactive^="hmac"] img')).toHaveCount(8);
   const fallback = page.locator('figure[data-interactive="hmac"] img');
@@ -116,10 +121,66 @@ test("static article remains complete without JavaScript; preview indexing and 4
   ).toBe(true);
   await expect(page.getByLabel("Authenticator secret (Base32)", { exact: true })).toHaveCount(0);
   await context.close();
-  expect((await request.get("/robots.txt")).headers()["x-robots-tag"]).toBe("noindex, nofollow");
+  const robotsResponse = await request.get("/robots.txt");
+  expect(robotsResponse.headers()["x-robots-tag"]).toBe(
+    production ? undefined : "noindex, nofollow",
+  );
+  expect(await robotsResponse.text()).toBe(
+    production
+      ? `User-agent: *\nAllow: /\nSitemap: ${site.url}/sitemap.xml\n`
+      : "User-agent: *\nDisallow: /\n",
+  );
   const missing = await request.get("/work/");
   expect(missing.status()).toBe(404);
   expect(await missing.text()).toContain("Page not found.");
+  expect(await missing.text()).toContain('name="robots" content="noindex, nofollow"');
+});
+
+test("canonical and sharing metadata follow navigation; only production publishes a sitemap", async ({
+  page,
+  request,
+}) => {
+  await page.goto("/");
+  await expect(page.locator('meta[name="robots"]')).toHaveAttribute("content", robots);
+  await expect(page.locator('link[rel="canonical"]')).toHaveAttribute("href", `${site.url}/`);
+  await expect(page.locator('meta[property="og:url"]')).toHaveAttribute("content", `${site.url}/`);
+  await page.getByRole("link", { name: /Building a CLI Secret Manager/ }).click();
+  await expect(page).toHaveURL(/\/posts\/key-secret-mananger\/$/);
+  await expect(page.locator('meta[name="robots"]')).toHaveAttribute("content", robots);
+  const canonical = `${site.url}/posts/key-secret-mananger/`;
+  await expect(page.locator('link[rel="canonical"]')).toHaveAttribute("href", canonical);
+  await expect(page.locator('meta[property="og:url"]')).toHaveAttribute("content", canonical);
+  await expect(page.locator('meta[property="og:title"]')).toHaveAttribute(
+    "content",
+    "Building a CLI Secret Manager",
+  );
+  await expect(page.locator('meta[name="twitter:title"]')).toHaveAttribute(
+    "content",
+    "Building a CLI Secret Manager",
+  );
+  await expect(page.locator('meta[name="twitter:card"]')).toHaveAttribute(
+    "content",
+    "summary_large_image",
+  );
+  await expect(page.locator('meta[property="og:image"]')).toHaveAttribute("content", site.ogImage);
+  await expect(page.locator('meta[name="twitter:image"]')).toHaveAttribute("content", site.ogImage);
+  const sitemap = await request.get("/sitemap.xml");
+  expect(sitemap.status()).toBe(production ? 200 : 404);
+  if (production) {
+    const entries = await page.evaluate(
+      (xml) => {
+        const document = new DOMParser().parseFromString(xml, "application/xml");
+        if (document.querySelector("parsererror")) throw new Error("Invalid sitemap XML");
+        return [...document.querySelectorAll("loc")].map((entry) => entry.textContent);
+      },
+      await sitemap.text(),
+    );
+    const posts = await readPosts();
+    expect(entries).toEqual([
+      `${site.url}/`,
+      ...posts.map((post) => `${site.url}/posts/${post.slug}/`),
+    ]);
+  }
 });
 
 test("a denied clipboard request announces a manual copying fallback", async ({ page }) => {
