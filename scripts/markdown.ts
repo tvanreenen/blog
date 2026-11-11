@@ -11,6 +11,8 @@ const highlighting: RehypeShikiOptions = {
   defaultColor: false,
   fallbackLanguage: "text",
   defaultLanguage: "text",
+  // Avoid eagerly loading every grammar before lazy code-fence highlighting.
+  langs: [],
   lazy: true,
   transformers: [
     {
