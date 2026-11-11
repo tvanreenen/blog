@@ -1,7 +1,7 @@
 import { cn } from "@/lib/utils";
 import styles from "../styles.module.css";
 import { ArrowDown, RefreshCw } from "lucide-react";
-import { FieldError } from "@/components/ui/field";
+import { DemoError } from "./demo-error";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -12,14 +12,14 @@ import {
   CardAction,
   CardFooter,
 } from "@/components/ui/card";
-import { useHmacExample } from "../example";
+import { useSecret, useCalculation } from "../example";
 import { HmacBytes } from "./bytes";
 import { encodeCounter, toHex } from "../lib/hmac";
-import { encodeBase32 } from "../lib/secret";
 
 /* oxlint-disable jsx-a11y/prefer-tag-over-role -- These cards label read-only data groups, not form fieldsets. */
 export function HmacBase32() {
-  const { secret, secretBytes, regenerate, generationError } = useHmacExample();
+  const { secret, regenerate, error } = useSecret();
+  const secretBytes = secret.bytes;
   return (
     <Card
       size="sm"
@@ -39,7 +39,7 @@ export function HmacBase32() {
       </CardHeader>
       <CardContent className={styles["hmac-input-content"]}>
         <span className={styles["hmac-output-label"]}>20 bytes · 160 bits · hexadecimal</span>
-        <InputBytes bytes={Array.from(secretBytes)} label="Secret bytes before Base32" />
+        <InputBytes bytes={secretBytes} label="Secret bytes before Base32" />
         <div className={styles["hmac-conversion"]}>
           <ArrowDown aria-hidden="true" />
           <span>Encode Base32</span>
@@ -50,9 +50,9 @@ export function HmacBase32() {
           aria-label="Authenticator secret (Base32)"
           aria-live="off"
         >
-          {secret}
+          {secret.base32}
         </output>
-        <FieldError>{generationError}</FieldError>
+        {error && <DemoError title="Secret unavailable">{error}</DemoError>}
       </CardContent>
       <CardFooter>
         <p className={styles["hmac-local-note"]}>
@@ -79,9 +79,14 @@ function InputBytes({ bytes, label }: { bytes?: readonly number[]; label: string
 
 /* oxlint-disable jsx-a11y/prefer-tag-over-role -- These cards label read-only data groups, not form fieldsets. */
 export function HmacExplorer() {
-  const { result, pending, error, secretBytes, counter, parsedCounter } = useHmacExample();
-  const message =
-    parsedCounter.value === null ? undefined : Array.from(encodeCounter(parsedCounter.value));
+  const calculation = useCalculation();
+  const { secret, regenerate } = useSecret();
+  if (calculation.status === "static") return null;
+  const { counter } = calculation;
+  const secretBytes = secret.bytes;
+  const result = calculation.status === "ready" ? calculation.result : undefined;
+  const pending = calculation.status === "pending";
+  const message = Array.from(encodeCounter(counter));
   return (
     <>
       <div className={styles["hmac-calculation"]} aria-busy={pending}>
@@ -105,7 +110,7 @@ export function HmacExplorer() {
                   aria-label="HMAC Base32 secret"
                   aria-live="off"
                 >
-                  {encodeBase32(secretBytes)}
+                  {secret.base32}
                 </output>
               </div>
               <div className={styles["hmac-conversion"]}>
@@ -115,7 +120,7 @@ export function HmacExplorer() {
               <span className={styles["hmac-output-label"]}>
                 {secretBytes.length} key bytes · hexadecimal
               </span>
-              <InputBytes bytes={Array.from(secretBytes)} label="HMAC key bytes" />
+              <InputBytes bytes={secretBytes} label="HMAC key bytes" />
             </CardContent>
           </Card>
           <Card
@@ -137,7 +142,7 @@ export function HmacExplorer() {
                   aria-label="HMAC decimal counter"
                   aria-live="off"
                 >
-                  {counter}
+                  {String(counter)}
                 </output>
               </div>
               <div className={styles["hmac-conversion"]}>
@@ -161,7 +166,15 @@ export function HmacExplorer() {
         <output className="sr-only">
           {result ? "HMAC result updated." : pending ? "Calculating." : ""}
         </output>
-        {error ? <FieldError>{error}</FieldError> : null}
+        {calculation.status === "error" && (
+          <DemoError
+            title="Calculation unavailable"
+            retry={regenerate}
+            action="Generate new secret"
+          >
+            {calculation.error}
+          </DemoError>
+        )}
       </div>
     </>
   );

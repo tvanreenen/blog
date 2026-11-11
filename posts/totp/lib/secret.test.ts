@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { decodeBase32, encodeBase32, EXAMPLE_SECRET, generateTotpSecret } from "./secret";
+import {
+  decodeBase32,
+  encodeBase32,
+  EXAMPLE_SECRET,
+  generateTotpSecret,
+  secretMaterial,
+} from "./secret";
 
 const encoder = new TextEncoder();
 const decoder = new TextDecoder();
@@ -47,9 +53,19 @@ describe("authenticator secrets", () => {
 
   it("generates a 160-bit seed with lossless Base32 encoding", () => {
     const secret = generateTotpSecret();
-    expect(secret).toMatch(/^[A-Z2-7]{32}$/);
-    const bytes = decodeBase32(secret);
+    expect(secret.base32).toMatch(/^[A-Z2-7]{32}$/);
+    const bytes = decodeBase32(secret.base32);
     expect(bytes).toHaveLength(20);
-    expect(encodeBase32(bytes)).toBe(secret);
+    expect(encodeBase32(bytes)).toBe(secret.base32);
+    expect(Array.from(bytes)).toEqual(secret.bytes);
+  });
+  it("owns immutable bytes and derives Base32 from that same snapshot", () => {
+    const input = new Uint8Array([1, 2, 3]);
+    const material = secretMaterial(input);
+    input[0] = 255;
+    expect(material.bytes).toEqual([1, 2, 3]);
+    expect(material.base32).toBe(encodeBase32(new Uint8Array([1, 2, 3])));
+    expect(Object.isFrozen(material)).toBe(true);
+    expect(Object.isFrozen(material.bytes)).toBe(true);
   });
 });

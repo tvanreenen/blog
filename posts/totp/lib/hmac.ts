@@ -1,16 +1,8 @@
-export const EXAMPLE_KEY = "12345678901234567890";
-export const MAX_COUNTER = (1n << 64n) - 1n;
-export const EXAMPLE_DIGEST = "75a48a19d4cbe100644e8ac1397eea747a2d33ab";
+import { DEMO, MAX_COUNTER, MODULUS } from "./parameters";
 
-export function parseCounter(
-  text: string,
-): { value: bigint; error: null } | { value: null; error: string } {
-  if (/^\d+$/.test(text)) {
-    const value = BigInt(text);
-    if (value <= MAX_COUNTER) return { value, error: null };
-  }
-  return { value: null, error: `Enter a whole number from 0 to ${MAX_COUNTER}.` };
-}
+export { MAX_COUNTER } from "./parameters";
+export const EXAMPLE_KEY = "12345678901234567890";
+export const EXAMPLE_DIGEST = "75a48a19d4cbe100644e8ac1397eea747a2d33ab";
 
 export function toHex(bytes: readonly number[]) {
   return bytes.map((byte) => byte.toString(16).padStart(2, "0")).join("");
@@ -24,17 +16,15 @@ export function encodeCounter(value: bigint) {
   return message;
 }
 
-export async function calculateHmac(keyInput: Uint8Array, counterText: string) {
+export async function calculateHmac(keyInput: Uint8Array | readonly number[], counter: bigint) {
   if (!keyInput.length) throw new Error("Enter a key.");
-  const counter = parseCounter(counterText);
-  if (counter.error !== null) throw new Error(counter.error);
 
   const keyBytes = new Uint8Array(keyInput);
-  const message = encodeCounter(counter.value);
+  const message = encodeCounter(counter);
   const key = await crypto.subtle.importKey(
     "raw",
     keyBytes,
-    { name: "HMAC", hash: "SHA-1" },
+    { name: "HMAC", hash: DEMO.hash },
     false,
     ["sign"],
   );
@@ -56,8 +46,8 @@ export async function calculateHmac(keyInput: Uint8Array, counterText: string) {
     selected,
     masked,
     number,
-    quotient: Math.floor(number / 1_000_000),
-    code: String(number % 1_000_000).padStart(6, "0"),
+    quotient: Math.floor(number / MODULUS),
+    code: String(number % MODULUS).padStart(DEMO.digits, "0"),
   };
 }
 

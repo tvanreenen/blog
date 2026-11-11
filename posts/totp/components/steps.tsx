@@ -1,20 +1,22 @@
 import { cn } from "@/lib/utils";
 import styles from "../styles.module.css";
 import { ArrowDown } from "lucide-react";
-import { useHmacExample } from "../example";
+import { useCalculation, useUnixTime } from "../example";
 import { HmacBytes } from "./bytes";
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
 import { MAX_COUNTER, toHex } from "../lib/hmac";
+import { DEMO, MODULUS, timeCounter } from "../lib/parameters";
+const period = BigInt(DEMO.period);
 
 const spaced = (bytes: number[]) => bytes.map((byte) => toHex([byte])).join(" ");
 
 function Unavailable() {
-  const { pending, error } = useHmacExample();
+  const calculation = useCalculation();
   return (
     <p className={styles["hmac-caption"]}>
-      {pending
+      {calculation.status === "pending"
         ? "Calculating this step…"
-        : error
+        : calculation.status === "error"
           ? "The calculation is unavailable. Generate a new secret to try again."
           : "Waiting for the current calculation."}
     </p>
@@ -22,11 +24,10 @@ function Unavailable() {
 }
 
 export function HmacClock() {
-  const { parsedCounter, unixTime } = useHmacExample();
-  const counter = parsedCounter.value;
-  if (counter === null) return <Unavailable />;
+  const unixTime = useUnixTime();
+  const counter = timeCounter(unixTime);
   const time = BigInt(unixTime);
-  const elapsed = Number(time % 30n);
+  const elapsed = Number(time % period);
   const windows = [-2n, -1n, 0n, 1n, 2n]
     .map((offset) => counter + offset)
     .filter((value) => value >= 0n && value <= MAX_COUNTER);
@@ -37,7 +38,7 @@ export function HmacClock() {
         className={styles["hmac-clock-viewport"]}
         data-part="clock-viewport"
         role="group"
-        aria-label={`Time windows slide beneath a fixed now marker. Current window ${counter}, from ${counter * 30n} up to ${counter * 30n + 30n} seconds, excluding the upper boundary.`}
+        aria-label={`Time windows slide beneath a fixed now marker. Current window ${counter}, from ${counter * period} up to ${counter * period + period} seconds, excluding the upper boundary.`}
       >
         <div className={styles["hmac-window-strip"]} aria-hidden="true">
           {windows.map((value) => (
@@ -48,15 +49,15 @@ export function HmacClock() {
               data-window={String(value)}
               data-current={value === counter}
               style={{
-                transform: `translateX(${(Number(value - counter) - elapsed / 30) * 100}%)`,
+                transform: `translateX(${(Number(value - counter) - elapsed / DEMO.period) * 100}%)`,
               }}
             >
               <div className={styles["hmac-window-card"]}>
                 <span>{value === counter ? "Active" : "Window"}</span>
                 <strong>{String(value)}</strong>
               </div>
-              <span className={styles["hmac-boundary"]} data-boundary={String(value * 30n)}>
-                <code>{String(value * 30n)}</code>
+              <span className={styles["hmac-boundary"]} data-boundary={String(value * period)}>
+                <code>{String(value * period)}</code>
               </span>
             </div>
           ))}
@@ -70,7 +71,7 @@ export function HmacClock() {
       </div>
       {/* oxlint-enable jsx-a11y/prefer-tag-over-role */}
       <p className={cn(styles["hmac-caption"], styles["hmac-clock-caption"])}>
-        Next window in {30 - elapsed} {30 - elapsed === 1 ? "second" : "seconds"}.
+        Next window in {DEMO.period - elapsed} {DEMO.period - elapsed === 1 ? "second" : "seconds"}.
       </p>
       <div className={styles["hmac-equation"]}>
         <code>floor(t ÷ 30)</code>
@@ -84,7 +85,8 @@ export function HmacClock() {
 }
 
 export function HmacSelect() {
-  const { result } = useHmacExample();
+  const calculation = useCalculation();
+  const result = calculation.status === "ready" ? calculation.result : undefined;
   if (!result) return <Unavailable />;
   const last = result.bytes[19]!;
   const hex = toHex([last]);
@@ -235,7 +237,8 @@ function MaskByteBits({ bytes, offset }: { bytes: readonly number[]; offset: num
 }
 
 export function HmacMask() {
-  const { result } = useHmacExample();
+  const calculation = useCalculation();
+  const result = calculation.status === "ready" ? calculation.result : undefined;
   if (!result) return <Unavailable />;
   const changed = result.selected[0] !== result.masked[0];
   return (
@@ -273,7 +276,8 @@ export function HmacMask() {
 }
 
 export function HmacNumber() {
-  const { result } = useHmacExample();
+  const calculation = useCalculation();
+  const result = calculation.status === "ready" ? calculation.result : undefined;
   if (!result) return <Unavailable />;
   return (
     <Card size="sm">
@@ -336,10 +340,11 @@ export function HmacNumber() {
 }
 
 export function HmacRemainder() {
-  const { result } = useHmacExample();
+  const calculation = useCalculation();
+  const result = calculation.status === "ready" ? calculation.result : undefined;
   if (!result) return <Unavailable />;
-  const remainder = result.number % 1_000_000;
-  const padding = 6 - String(remainder).length;
+  const remainder = result.number % MODULUS;
+  const padding = DEMO.digits - String(remainder).length;
   return (
     <Card size="sm">
       <CardHeader>
@@ -382,7 +387,7 @@ export function HmacRemainder() {
         </div>
         <p className={styles["hmac-caption"]}>
           {padding
-            ? `The remainder has ${6 - padding} digits. Add ${padding} leading ${padding === 1 ? "zero" : "zeros"} to fill all six positions.`
+            ? `The remainder has ${DEMO.digits - padding} digits. Add ${padding} leading ${padding === 1 ? "zero" : "zeros"} to fill all six positions.`
             : "The remainder fills all six positions. These are the digits you enter."}
         </p>
       </CardContent>

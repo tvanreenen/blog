@@ -361,7 +361,7 @@ test("HMAC explorer reports a calculation failure without showing a stale result
     });
   });
   await page.getByRole("button", { name: "Generate new secret", exact: true }).click();
-  await expect(explorer.getByRole("alert")).toHaveText(
+  await expect(explorer.getByRole("alert").locator('[data-slot="alert-description"] p')).toHaveText(
     "Could not calculate the result. Generate a new secret to try again.",
   );
   await expect(explorer.getByLabel("HMAC result", { exact: true })).toBeEmpty();
@@ -389,7 +389,7 @@ test("failed random generation preserves the current secret and can be retried",
     }),
   );
   await page.getByRole("button", { name: "Generate new secret", exact: true }).click();
-  await expect(page.getByRole("alert")).toHaveText(
+  await expect(page.getByRole("alert").locator('[data-slot="alert-description"] p')).toHaveText(
     "Could not generate a new secret. Try refreshing it again.",
   );
   await expect(key).toHaveText(initial);
@@ -415,4 +415,199 @@ test("the full article and all static diagrams remain readable without JavaScrip
   ).toBe(true);
   await expect(page.getByLabel("Authenticator secret (Base32)", { exact: true })).toHaveCount(0);
   await context.close();
+});
+
+test("initial random generation failure keeps reference figures and offers recovery", async ({
+  page,
+}) => {
+  await page.addInitScript(() => {
+    Date.now = () => 59000;
+    Object.defineProperty(crypto, "getRandomValues", {
+      configurable: true,
+      value: () => {
+        throw new Error("Random source unavailable");
+      },
+    });
+  });
+  await page.goto("/posts/totp/");
+  await expect(page.getByRole("alert")).toContainText("Could not generate a new secret");
+  await expect(page.locator('figure[data-interactive^="hmac"] img')).toHaveCount(8);
+  await expect(page.getByLabel("Final six-digit code", { exact: true })).toHaveCount(0);
+  await page.evaluate(() => Reflect.deleteProperty(crypto, "getRandomValues"));
+  await page.getByRole("button", { name: "Try again", exact: true }).click();
+  await expectSharedCalculation(page, 1n);
+  await expect(page.getByRole("alert")).toHaveCount(0);
+});
+
+test("slow out-of-order calculations never restore an older secret or code", async ({ page }) => {
+  await page.addInitScript(() => {
+    Date.now = () => 59000;
+  });
+  await page.goto("/posts/totp/");
+  await expectSharedCalculation(page, 1n);
+  await page.evaluate(() => {
+    const sign = crypto.subtle.sign.bind(crypto.subtle);
+    const jobs: (() => void)[] = [];
+    Object.assign(window, { hmacJobs: jobs });
+    Object.defineProperty(crypto.subtle, "sign", {
+      configurable: true,
+      value: async (...args: Parameters<typeof sign>) => {
+        const result = await sign(...args);
+        return new Promise<ArrayBuffer>((resolve) => {
+          jobs.push(() => resolve(result));
+        });
+      },
+    });
+  });
+  const refresh = page.getByRole("button", { name: "Generate new secret", exact: true });
+  const jobs = () =>
+    page.evaluate(() => (window as unknown as { hmacJobs: unknown[] }).hmacJobs.length);
+  await refresh.click();
+  await expect.poll(jobs).toBe(1);
+  await expect(page.getByLabel("Final six-digit code", { exact: true })).toHaveCount(0);
+  await expect(page.getByLabel("HMAC result", { exact: true })).toBeEmpty();
+  await refresh.click();
+  await expect.poll(jobs).toBe(2);
+  // Roll the counter forward while both secrets still have work in flight.
+  await page.evaluate(() => {
+    Date.now = () => 60000;
+    document.dispatchEvent(new Event("visibilitychange"));
+  });
+  await expect.poll(jobs).toBe(3);
+  await page.evaluate(() => (window as unknown as { hmacJobs: (() => void)[] }).hmacJobs[1]!());
+  await expect(page.getByLabel("Final six-digit code", { exact: true })).toHaveCount(0);
+  await page.evaluate(() => (window as unknown as { hmacJobs: (() => void)[] }).hmacJobs[2]!());
+  await expectSharedCalculation(page, 2n);
+  const newest = await page
+    .getByLabel("Authenticator secret (Base32)", { exact: true })
+    .textContent();
+  const code = await page.getByLabel("Final six-digit code", { exact: true }).textContent();
+  await page.evaluate(async () => {
+    (window as unknown as { hmacJobs: (() => void)[] }).hmacJobs[0]!();
+    await new Promise(requestAnimationFrame);
+    await new Promise(requestAnimationFrame);
+  });
+  await expect(page.getByLabel("Authenticator secret (Base32)", { exact: true })).toHaveText(
+    newest!,
+  );
+  await expect(page.getByLabel("Final six-digit code", { exact: true })).toHaveText(code!);
+  await expectSharedCalculation(page, 2n);
+  // Leave with another calculation pending, then resolve it after the article unmounts.
+  const errors: string[] = [];
+  page.on("pageerror", (error) => errors.push(error.message));
+  await refresh.click();
+  await expect.poll(jobs).toBe(4);
+  await page.getByRole("link", { name: "All writing", exact: true }).click();
+  await expect(page).toHaveURL(/\/$/);
+  await page.evaluate(async () => {
+    (window as unknown as { hmacJobs: (() => void)[] }).hmacJobs[3]!();
+    await new Promise(requestAnimationFrame);
+  });
+  expect(errors).toEqual([]);
+  await expect(page.locator('[data-interactive="hmac"]')).toHaveCount(0);
+});
+
+test("hidden pages pause work and resume from actual time, including backwards clock changes", async ({
+  page,
+}) => {
+  await page.clock.install({ time: new Date(58000) });
+  await page.clock.pauseAt(new Date(58000));
+  await page.goto("/posts/totp/");
+  await expectSharedCalculation(page, 1n);
+  await page.evaluate(() => {
+    const sign = crypto.subtle.sign.bind(crypto.subtle);
+    Object.assign(window, { signCalls: 0 });
+    Object.defineProperty(crypto.subtle, "sign", {
+      value: (...args: Parameters<typeof sign>) => {
+        const state = window as unknown as { signCalls: number };
+        state.signCalls++;
+        return sign(...args);
+      },
+    });
+  });
+  await page.clock.runFor(1000);
+  await expect(page.getByLabel("Unix time", { exact: true })).toHaveText("59");
+  expect(await page.evaluate(() => (window as unknown as { signCalls: number }).signCalls)).toBe(0);
+  await page.evaluate(() => {
+    Object.defineProperty(document, "hidden", { configurable: true, value: true });
+    document.dispatchEvent(new Event("visibilitychange"));
+  });
+  await page.clock.runFor(65000);
+  await expect(page.getByLabel("Unix time", { exact: true })).toHaveText("59");
+  expect(await page.evaluate(() => (window as unknown as { signCalls: number }).signCalls)).toBe(0);
+  await page.evaluate(() => {
+    Reflect.deleteProperty(document, "hidden");
+    document.dispatchEvent(new Event("visibilitychange"));
+  });
+  await expect(page.getByLabel("Unix time", { exact: true })).toHaveText("124");
+  await expectSharedCalculation(page, 4n);
+  expect(await page.evaluate(() => (window as unknown as { signCalls: number }).signCalls)).toBe(1);
+  await page.clock.setSystemTime(new Date(31000));
+  await page.evaluate(() => window.dispatchEvent(new Event("pageshow")));
+  await expect(page.getByLabel("Unix time", { exact: true })).toHaveText("31");
+  await expectSharedCalculation(page, 1n);
+});
+
+test("a delayed QR encoder renders only the latest secret after rapid regeneration", async ({
+  page,
+}) => {
+  let release = () => {};
+  const gate = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  let requested = false;
+  // The QR library is the article's sole lazy browser encoder chunk.
+  await page.route("**/assets/browser-*.js", async (route) => {
+    requested = true;
+    await gate;
+    await route.continue();
+  });
+  await page.goto("/posts/totp/");
+  await expect.poll(() => requested).toBe(true);
+  const uri = page.getByLabel("Setup URI", { exact: true });
+  const initial = await uri.textContent();
+  await page.getByRole("button", { name: "Generate new secret", exact: true }).click();
+  await page.getByRole("button", { name: "Generate new secret", exact: true }).click();
+  await expect(uri).not.toHaveText(initial!);
+  await expect(
+    page.getByRole("img", { name: "QR code for this setup URI", exact: true }),
+  ).toHaveCount(0);
+  const newest = await uri.textContent();
+  release();
+  expect(await decodeSetupQr(page)).toBe(newest);
+});
+
+test("QR encoder errors retain the setup link and can retry without changing the secret", async ({
+  page,
+}) => {
+  await page.route("**/assets/browser-*.js", async (route) => {
+    const response = await route.fetch();
+    const source = await response.text();
+    // Fail one actual encoder call, then delegate every later call to the real library.
+    const body = source.replace(
+      /export default ([^;]+);?\s*$/,
+      `
+      const retryTestEncoder = $1;
+      const retryTestCreate = retryTestEncoder.create;
+      let retryTestFail = true;
+      retryTestEncoder.create = (...args) => {
+        if (retryTestFail) { retryTestFail = false; throw new Error("Encoder unavailable"); }
+        return retryTestCreate(...args);
+      };
+      export default retryTestEncoder;
+    `,
+    );
+    expect(body).not.toBe(source);
+    await route.fulfill({ response, body });
+  });
+  await page.goto("/posts/totp/");
+  const qr = page.locator('[data-part="qr"]');
+  await expect(qr.getByRole("alert")).toContainText("QR unavailable");
+  const uri = await page.getByLabel("Setup URI", { exact: true }).textContent();
+  await expect(
+    qr.getByRole("link", { name: "Open in an authenticator", exact: true }),
+  ).toHaveAttribute("href", uri!);
+  await qr.getByRole("button", { name: "Try again", exact: true }).click();
+  expect(await decodeSetupQr(page)).toBe(uri);
+  await expect(qr.getByRole("alert")).toHaveCount(0);
 });

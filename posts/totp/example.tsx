@@ -1,81 +1,69 @@
-import { createContext, useContext, useEffect, useMemo, useState } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+  useSyncExternalStore,
+} from "react";
 import type { ReactNode } from "react";
-import { calculateHmac, parseCounter } from "./lib/hmac";
+import { calculateHmac } from "./lib/hmac";
 import type { HmacResult } from "./lib/hmac";
-import { decodeBase32, EXAMPLE_SECRET, generateTotpSecret } from "./lib/secret";
+import { generateTotpSecret, REFERENCE_SECRET } from "./lib/secret";
+import type { SecretMaterial } from "./lib/secret";
+import { createClock } from "./lib/clock";
+import type { ArticleClock } from "./lib/clock";
 
-type Calculation = { secret: string; counter: string; result?: HmacResult; error?: string };
-type HmacExample = {
-  enabled: boolean;
-  secret: string;
-  regenerate: () => void;
-  secretBytes: Uint8Array;
-  generationError: string | undefined;
-  counter: string;
-  unixTime: number;
-  parsedCounter: ReturnType<typeof parseCounter>;
-  result: HmacResult | undefined;
-  pending: boolean;
-  error: string | undefined;
-};
+type Session =
+  | { status: "static"; secret: SecretMaterial; error?: string }
+  | { status: "live"; secret: SecretMaterial; error?: string };
+type Snapshot = { secret: SecretMaterial; counter: bigint };
+type Completed = Snapshot &
+  ({ status: "ready"; result: HmacResult } | { status: "error"; error: string });
+export type Calculation = { status: "static" } | (Snapshot & { status: "pending" }) | Completed;
 
-export const HmacExampleContext = createContext<HmacExample | null>(null);
-
-export function useHmacExample() {
-  const example = useContext(HmacExampleContext);
-  if (!example) throw new Error("HMAC figures need an article-scoped example provider.");
-  return example;
+const SecretContext = createContext<(Session & { regenerate: () => void }) | null>(null);
+const CalculationContext = createContext<Calculation | null>(null);
+const ClockContext = createContext<ArticleClock | null>(null);
+function required<T>(value: T | null): T {
+  if (!value) throw new Error("HMAC figures need an article-scoped example provider.");
+  return value;
 }
+export function useSecret() {
+  return required(useContext(SecretContext));
+}
+export function useCalculation() {
+  return required(useContext(CalculationContext));
+}
+export function useUnixTime() {
+  const clock = required(useContext(ClockContext));
+  return useSyncExternalStore(clock.subscribe, clock.seconds, clock.serverSeconds);
+}
+const noSubscribe = () => () => {};
 
-export function HmacExampleProvider({ children }: { children: ReactNode }) {
-  const [enabled, setEnabled] = useState(false);
-  const [secret, setSecret] = useState(EXAMPLE_SECRET);
-  const [unixTime, setUnixTime] = useState(59);
-  const [generationError, setGenerationError] = useState<string>();
-  const [calculation, setCalculation] = useState<Calculation>();
-  const counter = String(BigInt(unixTime) / 30n);
-  const parsedCounter = parseCounter(counter);
-  const secretBytes = useMemo(() => decodeBase32(secret), [secret]);
-  const current =
-    calculation?.secret === secret && calculation.counter === counter ? calculation : null;
-
+function Calculations({ children }: { children: ReactNode }) {
+  const session = useSecret();
+  const clock = required(useContext(ClockContext));
+  const live = session.status === "live";
+  const counter = useSyncExternalStore(
+    live ? clock.subscribe : noSubscribe,
+    live ? clock.counter : clock.serverCounter,
+    clock.serverCounter,
+  );
+  const secret = session.secret;
+  const [completed, setCompleted] = useState<Completed>();
   useEffect(() => {
-    if (!globalThis.crypto?.subtle) return;
-    try {
-      // oxlint-disable-next-line react/set-state-in-effect -- Hydrate the static RFC example before activating browser-only randomness and time.
-      setSecret(generateTotpSecret());
-      setUnixTime(Math.floor(Date.now() / 1000));
-      setEnabled(true);
-    } catch {
-      // Keep the published, static example when browser crypto is unavailable.
-    }
-  }, []);
-  useEffect(() => {
-    if (!enabled) return;
-    let timer: ReturnType<typeof setTimeout> | undefined;
-    const tick = () => {
-      if (timer !== undefined) clearTimeout(timer);
-      const now = Date.now();
-      setUnixTime(Math.floor(now / 1000));
-      timer = setTimeout(tick, 1000 - (now % 1000));
-    };
-    tick();
-    document.addEventListener("visibilitychange", tick);
-    return () => {
-      if (timer !== undefined) clearTimeout(timer);
-      document.removeEventListener("visibilitychange", tick);
-    };
-  }, [enabled]);
-  useEffect(() => {
-    if (!enabled) return;
+    if (!live) return;
     let ignore = false;
-    calculateHmac(secretBytes, counter).then(
+    calculateHmac(secret.bytes, counter).then(
       (result) => {
-        if (!ignore) setCalculation({ secret, counter, result });
+        if (!ignore) setCompleted({ status: "ready", secret, counter, result });
       },
       () => {
         if (!ignore)
-          setCalculation({
+          setCompleted({
+            status: "error",
             secret,
             counter,
             error: "Could not calculate the result. Generate a new secret to try again.",
@@ -85,32 +73,40 @@ export function HmacExampleProvider({ children }: { children: ReactNode }) {
     return () => {
       ignore = true;
     };
-  }, [enabled, secretBytes, secret, counter]);
+  }, [live, secret, counter]);
+  const value = useMemo<Calculation>(() => {
+    if (!live) return { status: "static" };
+    if (completed?.secret === secret && completed.counter === counter) return completed;
+    return { status: "pending", secret, counter };
+  }, [live, secret, counter, completed]);
+  return <CalculationContext.Provider value={value}>{children}</CalculationContext.Provider>;
+}
 
+export function HmacExampleProvider({ children }: { children: ReactNode }) {
+  const [clock] = useState(createClock);
+  const [session, setSession] = useState<Session>({ status: "static", secret: REFERENCE_SECRET });
+  const regenerate = useCallback(() => {
+    try {
+      const secret = generateTotpSecret();
+      setSession({ status: "live", secret });
+    } catch {
+      setSession((current) => ({
+        ...current,
+        error: "Could not generate a new secret. Try refreshing it again.",
+      }));
+    }
+  }, []);
+  useEffect(() => {
+    if (!globalThis.crypto?.subtle) return;
+    // oxlint-disable-next-line react/set-state-in-effect -- Activate browser-only randomness after hydrating the static reference figures.
+    regenerate();
+  }, [regenerate]);
+  const value = useMemo(() => ({ ...session, regenerate }), [session, regenerate]);
   return (
-    <HmacExampleContext.Provider
-      value={{
-        enabled,
-        secret,
-        regenerate: () => {
-          try {
-            setSecret(generateTotpSecret());
-            setGenerationError(undefined);
-          } catch {
-            setGenerationError("Could not generate a new secret. Try refreshing it again.");
-          }
-        },
-        secretBytes,
-        generationError,
-        counter,
-        parsedCounter,
-        unixTime,
-        result: current?.result,
-        pending: Boolean(enabled && !current),
-        error: current?.error,
-      }}
-    >
-      {children}
-    </HmacExampleContext.Provider>
+    <ClockContext.Provider value={clock}>
+      <SecretContext.Provider value={value}>
+        <Calculations>{children}</Calculations>
+      </SecretContext.Provider>
+    </ClockContext.Provider>
   );
 }

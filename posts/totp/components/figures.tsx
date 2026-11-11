@@ -1,5 +1,6 @@
+import { DemoError } from "./demo-error";
 import type { ReactNode } from "react";
-import { useHmacExample } from "../example";
+import { useSecret, useCalculation } from "../example";
 import { HmacBase32, HmacExplorer } from "./inputs";
 import { HmacSetup } from "./setup";
 import { HmacClock, HmacSelect, HmacMask, HmacNumber, HmacRemainder } from "./steps";
@@ -16,16 +17,23 @@ function Figure({
   src: string;
   alt: string;
 }) {
-  const example = useHmacExample();
+  const session = useSecret();
+  const calculation = useCalculation();
+  const enabled = session.status === "live";
   return (
     <figure
       data-interactive={kind}
       data-not-typeset=""
       className={styles["hmac-explorer"]}
-      aria-busy={example.pending}
+      aria-busy={calculation.status === "pending"}
     >
-      {example.enabled ? children : <img src={src} alt={alt} className={styles.fallback} />}
-      {!example.enabled && kind === "hmac-base32" && (
+      {enabled ? children : <img src={src} alt={alt} className={styles.fallback} />}
+      {!enabled && session.error && kind === "hmac-base32" && (
+        <DemoError title="Secret unavailable" retry={session.regenerate}>
+          {session.error}
+        </DemoError>
+      )}
+      {!enabled && kind === "hmac-base32" && (
         <figcaption className={styles["hmac-caption"]}>
           The static figures use the public RFC test secret 12345678901234567890 as ASCII bytes, at
           59 seconds after the Unix epoch, adapted to six digits.

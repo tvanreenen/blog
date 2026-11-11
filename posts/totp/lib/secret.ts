@@ -1,8 +1,10 @@
+import { DEMO } from "./parameters";
+
 const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
 
 export const EXAMPLE_SECRET = "GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ";
 
-export function encodeBase32(bytes: Uint8Array) {
+export function encodeBase32(bytes: Uint8Array | readonly number[]) {
   let buffer = 0;
   let bits = 0;
   let text = "";
@@ -48,5 +50,12 @@ export function decodeBase32(input: string) {
 }
 
 export function generateTotpSecret() {
-  return encodeBase32(crypto.getRandomValues(new Uint8Array(20)));
+  return secretMaterial(crypto.getRandomValues(new Uint8Array(DEMO.secretBytes)));
 }
+
+export function secretMaterial(input: Uint8Array) {
+  const bytes = Object.freeze(Array.from(input));
+  return Object.freeze({ bytes, base32: encodeBase32(bytes) });
+}
+export type SecretMaterial = ReturnType<typeof secretMaterial>;
+export const REFERENCE_SECRET = secretMaterial(decodeBase32(EXAMPLE_SECRET));

@@ -1,11 +1,12 @@
+import { DEMO } from "./parameters";
 import { encodeBase32 } from "./secret";
 
 export const DEMO_ISSUER = "Blog demo";
 export const DEMO_ACCOUNT = "reader";
 export const DEMO_LABEL = `${encodeURIComponent(DEMO_ISSUER)}:${DEMO_ACCOUNT}`;
 
-export function totpSetupUri(bytes: Uint8Array) {
-  return `otpauth://totp/${DEMO_LABEL}?secret=${encodeBase32(bytes)}&issuer=${encodeURIComponent(DEMO_ISSUER)}&algorithm=SHA1&digits=6&period=30`;
+export function totpSetupUri(bytes: Uint8Array | readonly number[]) {
+  return `otpauth://totp/${DEMO_LABEL}?secret=${encodeBase32(bytes)}&issuer=${encodeURIComponent(DEMO_ISSUER)}&algorithm=${DEMO.uriAlgorithm}&digits=${DEMO.digits}&period=${DEMO.period}`;
 }
 
 // Load the encoder only when the enhanced setup figure is mounted.

@@ -1,31 +1,36 @@
 import styles from "../styles.module.css";
 import { useEffect, useState } from "react";
-import { useHmacExample } from "../example";
+import { useSecret } from "../example";
 import { DEMO_ACCOUNT, DEMO_ISSUER, DEMO_LABEL, totpQr, totpSetupUri } from "../lib/setup";
-import { encodeBase32 } from "../lib/secret";
+import { DEMO } from "../lib/parameters";
+import { DemoError } from "./demo-error";
 
-type Qr = { uri: string; size?: number; path?: string; failed?: boolean };
+type Qr = { uri: string; attempt: number } & (
+  | { status: "ready"; size: number; path: string }
+  | { status: "error" }
+);
 
 function SetupQr({ uri }: { uri: string }) {
   const [qr, setQr] = useState<Qr>();
+  const [attempt, setAttempt] = useState(0);
   useEffect(() => {
     let ignore = false;
     totpQr(uri).then(
       (result) => {
-        if (!ignore) setQr({ uri, ...result });
+        if (!ignore) setQr({ status: "ready", uri, attempt, ...result });
       },
       () => {
-        if (!ignore) setQr({ uri, failed: true });
+        if (!ignore) setQr({ status: "error", uri, attempt });
       },
     );
     return () => {
       ignore = true;
     };
-  }, [uri]);
-  const current = qr?.uri === uri ? qr : undefined;
+  }, [uri, attempt]);
+  const current = qr?.uri === uri && qr.attempt === attempt ? qr : { status: "pending" as const };
   return (
     <div className={styles["hmac-qr"]} data-part="qr">
-      {current?.path ? (
+      {current.status === "ready" ? (
         /* oxlint-disable jsx-a11y/prefer-tag-over-role -- The generated QR remains inline SVG with an accessible image role. */
         <svg
           role="img"
@@ -36,13 +41,13 @@ function SetupQr({ uri }: { uri: string }) {
           <rect width="100%" height="100%" fill="#fff" />
           <path d={current.path} fill="#000" />
         </svg>
+      ) : /* oxlint-enable jsx-a11y/prefer-tag-over-role */
+      current.status === "error" ? (
+        <DemoError title="QR unavailable" retry={() => setAttempt((value) => value + 1)}>
+          Use the setup link or enter the secret manually, or retry the QR code.
+        </DemoError>
       ) : (
-        /* oxlint-enable jsx-a11y/prefer-tag-over-role */
-        <output className={styles["hmac-caption"]}>
-          {current?.failed
-            ? "QR unavailable. Use the setup link or enter the secret manually."
-            : "Generating QR code…"}
-        </output>
+        <output className={styles["hmac-caption"]}>Generating QR code…</output>
       )}
       <a href={uri}>Open in an authenticator</a>
     </div>
@@ -50,9 +55,9 @@ function SetupQr({ uri }: { uri: string }) {
 }
 
 export function HmacSetup() {
-  const { secretBytes } = useHmacExample();
-  const secret = encodeBase32(secretBytes);
-  const uri = totpSetupUri(secretBytes);
+  const { secret: material } = useSecret();
+  const secret = material.base32;
+  const uri = totpSetupUri(material.bytes);
   return (
     <>
       <figcaption className={styles["hmac-output-label"]}>
@@ -67,9 +72,9 @@ export function HmacSetup() {
               ?secret=<strong>{secret}</strong>
             </span>
             <span>&amp;issuer={encodeURIComponent(DEMO_ISSUER)}</span>
-            <span>&amp;algorithm=SHA1</span>
-            <span>&amp;digits=6</span>
-            <span>&amp;period=30</span>
+            <span>&amp;algorithm={DEMO.uriAlgorithm}</span>
+            <span>&amp;digits={DEMO.digits}</span>
+            <span>&amp;period={DEMO.period}</span>
           </output>
           <dl className={styles["hmac-uri-key"]}>
             <div>
